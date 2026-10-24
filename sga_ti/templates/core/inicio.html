@@ -1,8 +1,9 @@
 {% extends "base.html" %}
+{% load etiquetas %}
 {% block titulo %}Dashboard{% endblock %}
 {% block contenido %}
 <section class="panel">
   <h1>Dashboard</h1>
-  <p class="estado-vacio">El tablero de control se habilita en la fase F2 con las mediciones registradas. En esta fase solo están disponibles la autenticación y los roles.</p>
+  <p class="estado-vacio">El tablero de control se habilita en la fase F2 con las mediciones registradas{% if user|tiene_permiso:"modificar_aspectos" %}. Ya puedes revisar el <a href="{% url 'ambiental:catalogo' %}">catálogo ambiental</a> de procesos, aspectos e impactos.{% endif %}</p>
 </section>
 {% endblock %}

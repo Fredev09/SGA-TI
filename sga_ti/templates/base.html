@@ -1,4 +1,5 @@
 {% load static %}
+{% load etiquetas %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}SGA-TI{% endblock %} · CloudTech Solutions S.A.S.</title>
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  {% block css %}{% endblock %}
 </head>
 <body>
   <header class="cabecera">
@@ -14,6 +16,12 @@
       <span class="marca-sub">CloudTech Solutions S.A.S. · ISO 14001:2015</span>
     </div>
     {% if user.is_authenticated %}
+    <nav class="principal" aria-label="Navegación principal">
+      <a href="{% url 'core:inicio' %}" class="enlace-nav{% if request.resolver_match.url_name == 'inicio' %} enlace-activo{% endif %}">Inicio</a>
+      {% if user|tiene_permiso:"modificar_aspectos" %}
+      <a href="{% url 'ambiental:catalogo' %}" class="enlace-nav{% if request.resolver_match.app_name == 'ambiental' %} enlace-activo{% endif %}">Catálogo ambiental</a>
+      {% endif %}
+    </nav>
     <div class="sesion">
       <span class="sesion-usuario">{{ user.get_full_name|default:user.username }}</span>
       <span class="sesion-rol">{{ user.get_rol_display }}</span>

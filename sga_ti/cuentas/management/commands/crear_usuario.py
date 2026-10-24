@@ -1,5 +1,6 @@
 from getpass import getpass
 
+from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 
 from cuentas.models import Usuario
@@ -24,5 +25,8 @@ class Command(BaseCommand):
             raise CommandError("La contraseña no puede estar vacía")
         if clave != confirmacion:
             raise CommandError("Las contraseñas no coinciden")
-        crear_usuario(username=usuario, password=clave, rol=rol)
+        try:
+            crear_usuario(username=usuario, password=clave, rol=rol)
+        except ValidationError as error:
+            raise CommandError(" ".join(error.messages))
         self.stdout.write("Usuario %s creado con rol %s" % (usuario, rol))
