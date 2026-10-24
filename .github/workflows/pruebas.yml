@@ -1,0 +1,29 @@
+name: pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    env:
+      SGA_TI_SECRET_KEY: ci-clave-efimera-sga-ti-0123456789-abcdef
+      SGA_TI_DB_PATH: /tmp/sga_ti.db
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Instalar dependencias
+        run: pip install -r sga_ti/requirements.txt
+
+      - name: Comprobacion de Django
+        run: python sga_ti/manage.py check
+
+      - name: Ejecutar suite de pruebas
+        run: python sga_ti/manage.py test --verbosity 2

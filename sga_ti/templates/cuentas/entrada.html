@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block titulo %}Entrada{% endblock %}
+{% block contenido %}
+<section class="panel-login">
+  <h1 class="login-titulo">Inicio de sesión</h1>
+  <p class="login-sub">Sistema de Gestión Ambiental · ISO 14001:2015</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <ul class="errores">
+      {% for error in form.non_field_errors %}
+      <li class="error">{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% for campo in form %}
+    <div class="campo">
+      <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+      {{ campo }}
+      {% for error in campo.errors %}
+      <p class="error">{{ error }}</p>
+      {% endfor %}
+    </div>
+    {% endfor %}
+    <button type="submit" class="boton boton-primario">Entrar</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}SGA-TI{% endblock %} · CloudTech Solutions S.A.S.</title>
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+</head>
+<body>
+  <header class="cabecera">
+    <div class="marca">
+      <span class="marca-nombre">SGA-TI</span>
+      <span class="marca-sub">CloudTech Solutions S.A.S. · ISO 14001:2015</span>
+    </div>
+    {% if user.is_authenticated %}
+    <div class="sesion">
+      <span class="sesion-usuario">{{ user.get_full_name|default:user.username }}</span>
+      <span class="sesion-rol">{{ user.get_rol_display }}</span>
+      <form method="post" action="{% url 'cuentas:salida' %}">
+        {% csrf_token %}
+        <button type="submit" class="boton">Cerrar sesión</button>
+      </form>
+    </div>
+    {% endif %}
+  </header>
+  {% if messages %}
+  <ul class="mensajes">
+    {% for mensaje in messages %}
+    <li class="mensaje mensaje-{{ mensaje.tags }}">{{ mensaje }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <main class="contenido">
+    {% block contenido %}{% endblock %}
+  </main>
+  <footer class="pie">Proyecto académico de gestión ambiental · Datos de demostración</footer>
+</body>
+</html>
