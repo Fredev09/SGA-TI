@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% block titulo %}{{ no_conformidad.codigo }}{% endblock %}
+{% block titulo_pagina %}No conformidad {{ no_conformidad.codigo }}{% endblock %}
+{% block subtitulo_pagina %}RF-05 · ISO 10.1 / 10.2 · Origen {{ no_conformidad.get_origen_display }}{% endblock %}
+{% block contenido %}
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Hallazgo</h2>
+      <p class="tarjeta-sub">Detectado el {{ no_conformidad.fecha_deteccion|date:"d/m/Y H:i" }}</p>
+    </div>
+    <div class="ficha-nc-acciones">
+      <span class="pastilla pastilla-{% if no_conformidad.estado == 'CERRADA' %}ok{% elif no_conformidad.estado == 'EN_ANALISIS' %}advertencia{% else %}alerta{% endif %}">{{ no_conformidad.get_estado_display }}</span>
+      <span class="pastilla pastilla-neutra">Severidad {{ no_conformidad.get_severidad_display }}</span>
+      {% if no_conformidad.requiere_revision %}
+      <span class="pastilla pastilla-alerta">Requiere revisión</span>
+      {% endif %}
+    </div>
+  </div>
+  <p>{{ no_conformidad.descripcion }}</p>
+  {% if no_conformidad.medicion %}
+  <p class="texto-suave">
+    Medición asociada: <span class="codigo">{{ no_conformidad.medicion.indicador.codigo }}</span> ·
+    {{ no_conformidad.medicion.nombre_mes }} {{ no_conformidad.medicion.anio }}
+  </p>
+  {% endif %}
+</section>
+
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Causa raíz</h2>
+      <p class="tarjeta-sub">Obligatoria para el cierre del hallazgo</p>
+    </div>
+    <span class="chip">ISO 10.2</span>
+  </div>
+  {% if no_conformidad.causa_raiz %}
+  <p>{{ no_conformidad.causa_raiz }}</p>
+  {% elif no_conformidad.estado == "CERRADA" %}
+  <p class="estado-vacio">Sin causa raíz registrada.</p>
+  {% endif %}
+  {% if no_conformidad.estado != "CERRADA" %}
+  <form method="post" action="{% url 'gestion:causa_raiz' no_conformidad.pk %}" novalidate>
+    {% csrf_token %}
+    {% if form_causa.non_field_errors %}
+    <ul class="errores">
+      {% for error in form_causa.non_field_errors %}
+      <li class="error">{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% for campo in form_causa %}
+    <div class="campo">
+      <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+      {{ campo }}
+      {% for error in campo.errors %}
+      <p class="error">{{ error }}</p>
+      {% endfor %}
+    </div>
+    {% endfor %}
+    <div class="acciones">
+      <button type="submit" class="boton">Guardar causa raíz</button>
+    </div>
+  </form>
+  {% endif %}
+</section>
+
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Acciones correctivas</h2>
+      <p class="tarjeta-sub">Registros: {{ acciones|length }}</p>
+    </div>
+    <span class="chip">ISO 10.2</span>
+  </div>
+  {% if acciones %}
+  <ul class="lista-acciones">
+    {% for item in acciones %}
+    <li class="accion">
+      <div class="accion-cabecera">
+        <strong>{{ item.accion.descripcion_accion }}</strong>
+        <div class="ficha-nc-acciones">
+          {% if item.accion.ejecutada %}
+          <span class="pastilla pastilla-ok">Ejecutada</span>
+          {% else %}
+          <span class="pastilla pastilla-neutra">Pendiente</span>
+          {% endif %}
+          {% if item.accion.es_eficaz %}
+          <span class="pastilla pastilla-ok">Eficacia satisfactoria</span>
+          {% endif %}
+        </div>
+      </div>
+      <p class="texto-suave">
+        Responsable {{ item.accion.responsable }} · Límite {{ item.accion.fecha_limite|date:"d/m/Y" }}
+      </p>
+      {% if item.accion.evaluacion_eficacia %}
+      <p class="texto-suave">Evaluación de eficacia: {{ item.accion.evaluacion_eficacia }}</p>
+      {% endif %}
+      {% if no_conformidad.estado != "CERRADA" %}
+      <form method="post" action="{% url 'gestion:actualizar_accion' no_conformidad.pk item.accion.pk %}" novalidate>
+        {% csrf_token %}
+        {% for error in item.formulario.non_field_errors %}
+        <p class="error">{{ error }}</p>
+        {% endfor %}
+        <div class="accion-campos">
+          {% for campo in item.formulario %}
+            {% if campo.field.widget.input_type == "checkbox" %}
+            <label class="campo-check" for="{{ campo.id_for_label }}">{{ campo }} {{ campo.label }}</label>
+            {% else %}
+            <div class="campo">
+              <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+              {{ campo }}
+              {% for error in campo.errors %}
+              <p class="error">{{ error }}</p>
+              {% endfor %}
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+        <div class="acciones">
+          <button type="submit" class="boton">Guardar acción</button>
+        </div>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="estado-vacio">Sin acciones correctivas registradas.</p>
+  {% endif %}
+  {% if no_conformidad.estado != "CERRADA" %}
+  <div class="seccion">
+    <div class="cabecera-seccion">
+      <h2>Nueva acción correctiva</h2>
+    </div>
+    <form method="post" action="{% url 'gestion:nueva_accion' no_conformidad.pk %}" novalidate>
+      {% csrf_token %}
+      {% if form_accion.non_field_errors %}
+      <ul class="errores">
+        {% for error in form_accion.non_field_errors %}
+        <li class="error">{{ error }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% for campo in form_accion %}
+      <div class="campo">
+        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        {% for error in campo.errors %}
+        <p class="error">{{ error }}</p>
+        {% endfor %}
+      </div>
+      {% endfor %}
+      <div class="acciones">
+        <button type="submit" class="boton">Agregar acción</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</section>
+
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Evidencias</h2>
+      <p class="tarjeta-sub">Archivo protegido y referencia documental localizable</p>
+    </div>
+    <span class="chip">ISO 7.5.3</span>
+  </div>
+  {% if evidencias %}
+  <div class="tabla-contenedor">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th scope="col">Archivo</th>
+          <th scope="col">Referencia</th>
+          <th scope="col">Huella SHA-256</th>
+          <th scope="col">Cargada por</th>
+          <th scope="col">Fecha</th>
+          <th scope="col">Descarga</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for evidencia in evidencias %}
+        <tr>
+          <td>
+            {{ evidencia.nombre_original }}<br>
+            <span class="muted codigo">{{ evidencia.tipo }} · {{ evidencia.tamano|filesizeformat }}</span>
+          </td>
+          <td>{{ evidencia.referencia }}</td>
+          <td class="codigo">{{ evidencia.huella|slice:":16" }}…</td>
+          <td>{{ evidencia.usuario.username }}</td>
+          <td class="codigo">{{ evidencia.fecha_carga|date:"d/m/Y H:i" }}</td>
+          <td><a class="enlace-accion" href="{% url 'gestion:descargar_evidencia' no_conformidad.pk evidencia.pk %}">Descargar</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="estado-vacio">Sin evidencias adjuntas.</p>
+  {% endif %}
+  {% if no_conformidad.estado != "CERRADA" %}
+  <div class="seccion">
+    <div class="cabecera-seccion">
+      <h2>Adjuntar evidencia</h2>
+    </div>
+    <form method="post" action="{% url 'gestion:nueva_evidencia' no_conformidad.pk %}" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% if form_evidencia.non_field_errors %}
+      <ul class="errores">
+        {% for error in form_evidencia.non_field_errors %}
+        <li class="error">{{ error }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% for campo in form_evidencia %}
+      <div class="campo">
+        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        {% for error in campo.errors %}
+        <p class="error">{{ error }}</p>
+        {% endfor %}
+        {% if campo.help_text %}
+        <p class="ayuda">{{ campo.help_text }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <div class="acciones">
+        <button type="submit" class="boton">Subir evidencia</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</section>
+
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Cierre del hallazgo</h2>
+      <p class="tarjeta-sub">El servidor rechaza el cierre mientras falte algún requisito</p>
+    </div>
+    <span class="chip">ISO 10.2</span>
+  </div>
+  <ul class="lista-requisitos">
+    <li>
+      <span class="punto {% if requisitos.causa_raiz %}punto-ok{% else %}punto-pendiente{% endif %}" aria-hidden="true"></span>
+      Causa raíz documentada
+    </li>
+    <li>
+      <span class="punto {% if requisitos.accion_ejecutada %}punto-ok{% else %}punto-pendiente{% endif %}" aria-hidden="true"></span>
+      Acción correctiva ejecutada
+    </li>
+    <li>
+      <span class="punto {% if requisitos.eficacia %}punto-ok{% else %}punto-pendiente{% endif %}" aria-hidden="true"></span>
+      Verificación de eficacia satisfactoria
+    </li>
+    <li>
+      <span class="punto {% if requisitos.evidencia %}punto-ok{% else %}punto-pendiente{% endif %}" aria-hidden="true"></span>
+      Evidencia localizable disponible
+    </li>
+  </ul>
+  {% if no_conformidad.estado == "CERRADA" %}
+  <p class="texto-suave">
+    Cerrada por {{ no_conformidad.cerrada_por.username|default:"—" }} el
+    {{ no_conformidad.fecha_cierre|date:"d/m/Y H:i" }}.
+  </p>
+  {% else %}
+  <form method="post" action="{% url 'gestion:cerrar' no_conformidad.pk %}">
+    {% csrf_token %}
+    <div class="acciones">
+      <button type="submit" class="boton boton-primario">Cerrar no conformidad</button>
+    </div>
+  </form>
+  {% endif %}
+</section>
+
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Historial de estados</h2>
+      <p class="tarjeta-sub">Registros: {{ transiciones|length }}</p>
+    </div>
+    <span class="chip">ISO 7.5.3</span>
+  </div>
+  {% if transiciones %}
+  <div class="tabla-contenedor">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th scope="col">Fecha</th>
+          <th scope="col">Transición</th>
+          <th scope="col">Usuario</th>
+          <th scope="col">Observación</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for transicion in transiciones %}
+        <tr>
+          <td class="codigo">{{ transicion.fecha|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% if transicion.estado_anterior %}
+            {{ transicion.get_estado_anterior_display }} → {{ transicion.get_estado_nuevo_display }}
+            {% else %}
+            Creación → {{ transicion.get_estado_nuevo_display }}
+            {% endif %}
+          </td>
+          <td>{{ transicion.usuario.username }} <span class="muted">({{ transicion.usuario.get_rol_display }})</span></td>
+          <td>{{ transicion.observacion|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="estado-vacio">Sin transiciones registradas.</p>
+  {% endif %}
+</section>
+{% endblock %}

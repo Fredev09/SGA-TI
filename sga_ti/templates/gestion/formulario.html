@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block titulo %}Registrar no conformidad{% endblock %}
+{% block titulo_pagina %}Registrar no conformidad{% endblock %}
+{% block subtitulo_pagina %}RF-05 · ISO 10.1 / 10.2 · Hallazgo de auditoría o manual{% endblock %}
+{% block contenido %}
+<section class="tarjeta tarjeta-formulario">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Datos del hallazgo</h2>
+      <p class="tarjeta-sub">El código y la fecha de detección se asignan automáticamente</p>
+    </div>
+    <span class="chip">ISO 10.2</span>
+  </div>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <ul class="errores">
+      {% for error in form.non_field_errors %}
+      <li class="error">{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% for campo in form %}
+    <div class="campo">
+      <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+      {{ campo }}
+      {% for error in campo.errors %}
+      <p class="error">{{ error }}</p>
+      {% endfor %}
+    </div>
+    {% endfor %}
+    <div class="acciones">
+      <button type="submit" class="boton boton-primario">Registrar hallazgo</button>
+      <a href="{% url 'gestion:lista' %}" class="boton">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

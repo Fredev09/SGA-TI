@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block titulo %}No conformidades{% endblock %}
+{% block titulo_pagina %}No conformidades{% endblock %}
+{% block subtitulo_pagina %}RF-05 · ISO 10.1 / 10.2 · Ciclo de vida de hallazgos y acciones correctivas{% endblock %}
+{% block contenido %}
+<div class="barra">
+  <form method="get" class="filtros">
+    <label for="filtro-estado">Estado</label>
+    <select id="filtro-estado" name="estado">
+      <option value="activas" {% if filtro == "activas" %}selected{% endif %}>Activas</option>
+      <option value="cerradas" {% if filtro == "cerradas" %}selected{% endif %}>Cerradas</option>
+      <option value="todas" {% if filtro == "todas" %}selected{% endif %}>Todas</option>
+    </select>
+    <button type="submit" class="boton">Filtrar</button>
+  </form>
+  <a href="{% url 'gestion:nueva' %}" class="boton boton-primario">Registrar no conformidad</a>
+</div>
+
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Hallazgos registrados</h2>
+      <p class="tarjeta-sub">Registros: {{ no_conformidades|length }} · IRNC {{ resumen.irnc }} % con {{ resumen.total }} no conformidades registradas en el año</p>
+    </div>
+    <span class="chip">ISO 10.2</span>
+  </div>
+  {% if no_conformidades %}
+  <div class="tabla-contenedor">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th scope="col">Código</th>
+          <th scope="col">Origen</th>
+          <th scope="col">Detección</th>
+          <th scope="col">Hallazgo</th>
+          <th scope="col">Severidad</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Revisión</th>
+          <th scope="col">Detalle</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for no_conformidad in no_conformidades %}
+        <tr>
+          <td class="codigo">{{ no_conformidad.codigo }}</td>
+          <td>{{ no_conformidad.get_origen_display }}</td>
+          <td class="codigo">{{ no_conformidad.fecha_deteccion|date:"d/m/Y" }}</td>
+          <td>{{ no_conformidad.descripcion }}</td>
+          <td>{{ no_conformidad.get_severidad_display }}</td>
+          <td><span class="pastilla pastilla-{% if no_conformidad.estado == 'CERRADA' %}ok{% elif no_conformidad.estado == 'EN_ANALISIS' %}advertencia{% else %}alerta{% endif %}">{{ no_conformidad.get_estado_display }}</span></td>
+          <td>
+            {% if no_conformidad.requiere_revision %}
+            <span class="alerta-texto">Requiere revisión</span>
+            {% else %}
+            <span class="muted">—</span>
+            {% endif %}
+          </td>
+          <td><a class="enlace-accion" href="{% url 'gestion:detalle' no_conformidad.pk %}">Gestionar</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="estado-vacio">No hay no conformidades para el filtro seleccionado.</p>
+  {% endif %}
+</section>
+{% endblock %}

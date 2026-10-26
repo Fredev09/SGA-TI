@@ -171,7 +171,12 @@
       <li class="ficha-nc">
         <div class="ficha-nc-cabecera">
           <span class="codigo">{{ no_conformidad.codigo }}</span>
-          <span class="pastilla pastilla-alerta">{{ no_conformidad.get_estado_display }}</span>
+          <div class="ficha-nc-acciones">
+            <span class="pastilla pastilla-alerta">{{ no_conformidad.get_estado_display }}</span>
+            {% if user|tiene_permiso:"gestionar_no_conformidades" %}
+            <a class="enlace-accion" href="{% url 'gestion:detalle' no_conformidad.pk %}">Gestionar</a>
+            {% endif %}
+          </div>
         </div>
         <p>{{ no_conformidad.descripcion }}</p>
         <p class="muted">

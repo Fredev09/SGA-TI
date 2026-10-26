@@ -5,4 +5,5 @@ urlpatterns = [
     path("", include("cuentas.urls")),
     path("", include("ambiental.urls")),
     path("", include("operacion.urls")),
+    path("", include("gestion.urls")),
 ]

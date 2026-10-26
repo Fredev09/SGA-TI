@@ -69,6 +69,10 @@ WSGI_APPLICATION = "sga_ti.wsgi.application"
 
 SQLITE_RUTA = os.environ.get("SGA_TI_DB_PATH", str(Path.home() / "sga_ti_datos" / "sga_ti.db"))
 
+EVIDENCIAS_RUTA = os.environ.get(
+    "SGA_TI_EVIDENCIAS_PATH", str(Path.home() / "sga_ti_evidencias")
+)
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",

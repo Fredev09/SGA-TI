@@ -14,6 +14,7 @@ ACCIONES = {
     "modificar_indicadores": (Usuario.Rol.RESPONSABLE_SGA,),
     "modificar_metas": (Usuario.Rol.RESPONSABLE_SGA,),
     "modificar_usuarios": (Usuario.Rol.RESPONSABLE_SGA,),
+    "gestionar_no_conformidades": (Usuario.Rol.RESPONSABLE_SGA,),
     "cerrar_no_conformidades": (Usuario.Rol.RESPONSABLE_SGA,),
     "generar_reportes": (Usuario.Rol.RESPONSABLE_SGA,),
 }

@@ -712,6 +712,57 @@ a{color:var(--accent)}
   gap:10px;
 }
 .ficha-nc p{margin-top:6px}
+.ficha-nc-acciones{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.lista-acciones{
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.accion{
+  background:var(--sub);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:14px 16px;
+}
+.accion-cabecera{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  flex-wrap:wrap;
+  font-size:13.5px;
+}
+.accion-campos{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:10px;
+}
+.campo-check{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12.5px;
+  font-weight:700;
+  cursor:pointer;
+}
+.campo-check input{width:auto;accent-color:var(--accent)}
+.lista-requisitos{
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  font-size:13px;
+  margin-bottom:14px;
+}
+.lista-requisitos li{display:flex;align-items:center;gap:8px}
+.punto-pendiente{background:var(--border)}
 .login-tarjeta{
   width:100%;
   background:var(--panel);
