@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titulo %}Restablecer contraseña{% endblock %}
+{% block titulo_pagina %}Restablecer contraseña{% endblock %}
+{% block subtitulo_pagina %}RNF-02 · ISO 5.3 · {{ usuario.username }} · {{ usuario.get_rol_display }}{% endblock %}
+{% block contenido %}
+<section class="tarjeta tarjeta-formulario">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Nueva contraseña</h2>
+      <p class="tarjeta-sub">La asigna el Responsable del SGA y no se muestra después de guardarla</p>
+    </div>
+    <span class="chip">ISO 5.3</span>
+  </div>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <ul class="errores">
+      {% for error in form.non_field_errors %}
+      <li class="error">{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% for campo in form %}
+    <div class="campo">
+      <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+      {{ campo }}
+      {% for error in campo.errors %}
+      <p class="error">{{ error }}</p>
+      {% endfor %}
+    </div>
+    {% endfor %}
+    <p class="ayuda">Debe cumplir las reglas de seguridad: longitud mínima, no ser común, no numérica y no parecerse al usuario.</p>
+    <div class="acciones">
+      <button type="submit" class="boton boton-primario">Guardar contraseña</button>
+      <a href="{% url 'cuentas:usuarios' %}" class="boton">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

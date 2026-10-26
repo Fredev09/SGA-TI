@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}SGA-TI{% endblock %} · CloudTech Solutions S.A.S.</title>
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <script src="{% static 'js/tema.js' %}" defer></script>
   {% block css %}{% endblock %}
 </head>
 <body>
@@ -33,6 +34,16 @@
     <symbol id="icono-reporte" viewBox="0 0 24 24">
       <path d="M6 3h8l4 4v14H6z"></path>
       <path d="M14 3v4h4M9 12h6M9 16h6"></path>
+    </symbol>
+    <symbol id="icono-usuarios" viewBox="0 0 24 24">
+      <circle cx="9" cy="8" r="3.5"></circle>
+      <path d="M3 20c0-3.2 2.7-5.5 6-5.5s6 2.3 6 5.5"></path>
+      <path d="M16 5.5a3 3 0 0 1 0 5.8M17.5 14.8c2 .7 3.5 2.4 3.5 4.7"></path>
+    </symbol>
+    <symbol id="icono-preferencias" viewBox="0 0 24 24">
+      <path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path>
+      <circle cx="16" cy="7" r="2"></circle>
+      <circle cx="10" cy="17" r="2"></circle>
     </symbol>
     <symbol id="icono-metas" viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="9"></circle>
@@ -83,6 +94,14 @@
           <svg class="nav-icono" aria-hidden="true"><use href="#icono-metas"></use></svg>Metas e indicadores
         </a>
         {% endif %}
+        {% if user|tiene_permiso:"modificar_usuarios" %}
+        <a class="nav-item{% if request.resolver_match.url_name == 'usuarios' or request.resolver_match.url_name == 'usuario_nuevo' or request.resolver_match.url_name == 'usuario_editar' or request.resolver_match.url_name == 'usuario_contrasena' %} active{% endif %}" href="{% url 'cuentas:usuarios' %}">
+          <svg class="nav-icono" aria-hidden="true"><use href="#icono-usuarios"></use></svg>Usuarios y roles
+        </a>
+        {% endif %}
+        <a class="nav-item{% if request.resolver_match.url_name == 'preferencias' %} active{% endif %}" href="{% url 'cuentas:preferencias' %}">
+          <svg class="nav-icono" aria-hidden="true"><use href="#icono-preferencias"></use></svg>Preferencias del sistema
+        </a>
       </nav>
       <div class="user">
         <p class="user-line">{{ user.get_full_name|default:user.username }} · {{ user.get_rol_display }}</p>

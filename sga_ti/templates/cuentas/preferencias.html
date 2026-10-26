@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titulo %}Preferencias del sistema{% endblock %}
+{% block titulo_pagina %}Preferencias del sistema{% endblock %}
+{% block subtitulo_pagina %}RNF-01 · Tema de la interfaz y persistencia de datos{% endblock %}
+{% block contenido %}
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Tema de la interfaz</h2>
+      <p class="tarjeta-sub">La preferencia se guarda en este navegador; el tema claro es el predeterminado</p>
+    </div>
+    <span class="chip">RNF-01</span>
+  </div>
+  <div class="opciones-tema">
+    <label class="opcion-tema" for="tema-claro">
+      <input type="radio" id="tema-claro" name="tema" value="claro" data-tema checked>
+      <span class="muestra muestra-claro" aria-hidden="true"></span>
+      Modo claro
+    </label>
+    <label class="opcion-tema" for="tema-oscuro">
+      <input type="radio" id="tema-oscuro" name="tema" value="oscuro" data-tema>
+      <span class="muestra muestra-oscuro" aria-hidden="true"></span>
+      Modo oscuro
+    </label>
+  </div>
+  <p class="ayuda">El cambio se aplica al instante y se conserva mientras uses este navegador.</p>
+</section>
+
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Persistencia de datos</h2>
+      <p class="tarjeta-sub">Estado real de la configuración del sistema</p>
+    </div>
+    <span class="chip">RNF-03</span>
+  </div>
+  <dl class="ficha">
+    <dt>Base local</dt>
+    <dd>SQLite activa para operación sin conexión</dd>
+    <dt>Sincronización externa</dt>
+    <dd>No configurada; el servicio en la nube sigue pendiente de definir</dd>
+    <dt>Evidencias</dt>
+    <dd>Archivos locales fuera del repositorio, con descarga autorizada</dd>
+  </dl>
+</section>
+{% endblock %}

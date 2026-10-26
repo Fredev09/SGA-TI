@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block titulo %}{% if creando %}Nuevo usuario{% else %}Editar usuario{% endif %}{% endblock %}
+{% block titulo_pagina %}{% if creando %}Nuevo usuario{% else %}Editar usuario{% endif %}{% endblock %}
+{% block subtitulo_pagina %}RNF-02 · ISO 5.3 · Alta y actualización de cuentas{% endblock %}
+{% block contenido %}
+<section class="tarjeta tarjeta-formulario">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">{% if creando %}Datos de la cuenta{% else %}{{ usuario.username }}{% endif %}</h2>
+      <p class="tarjeta-sub">
+        {% if creando %}La contraseña la asigna el Responsable del SGA{% else %}El nombre de usuario no se modifica para conservar la trazabilidad{% endif %}
+      </p>
+    </div>
+    <span class="chip">ISO 5.3</span>
+  </div>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <ul class="errores">
+      {% for error in form.non_field_errors %}
+      <li class="error">{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% for campo in form %}
+      {% if campo.field.widget.input_type == "checkbox" %}
+      <label class="campo-check" for="{{ campo.id_for_label }}">{{ campo }} {{ campo.label }}</label>
+      {% else %}
+      <div class="campo">
+        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        {% for error in campo.errors %}
+        <p class="error">{{ error }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endfor %}
+    <div class="acciones">
+      <button type="submit" class="boton boton-primario">Guardar usuario</button>
+      <a href="{% url 'cuentas:usuarios' %}" class="boton">Cancelar</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
