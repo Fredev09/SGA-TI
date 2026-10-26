@@ -76,7 +76,7 @@
     <span class="chip">ISO 10.2</span>
   </div>
   {% if acciones %}
-  <ul class="lista-acciones">
+  <ul class="lista-acciones" data-paginar data-tamano="5">
     {% for item in acciones %}
     <li class="accion">
       <div class="accion-cabecera">
@@ -173,7 +173,7 @@
     <span class="chip">ISO 7.5.3</span>
   </div>
   {% if evidencias %}
-  <div class="tabla-contenedor">
+  <div class="tabla-contenedor" data-paginar data-tamano="5">
     <table class="tabla">
       <thead>
         <tr>
@@ -289,7 +289,7 @@
     <span class="chip">ISO 7.5.3</span>
   </div>
   {% if transiciones %}
-  <div class="tabla-contenedor">
+  <div class="tabla-contenedor" data-paginar data-tamano="10">
     <table class="tabla">
       <thead>
         <tr>

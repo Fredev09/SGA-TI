@@ -559,6 +559,31 @@ a{color:var(--accent)}
 .tabla tbody tr:last-child td{border-bottom:none}
 .tabla tbody tr:hover{background:var(--sub)}
 .tabla td.codigo{white-space:nowrap}
+.paginador{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+.paginador-resumen{
+  font-family:var(--font-mono);
+  font-size:var(--t-etiqueta);
+  color:var(--muted);
+}
+.paginador-controles{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.boton-icono{padding:4px 11px;font-size:var(--t-base);line-height:1.2}
+.boton-icono:disabled{opacity:.45;cursor:not-allowed}
+.paginador-tamano{
+  background:var(--sub);
+  border:1px solid var(--border);
+  border-radius:4px;
+  color:var(--text);
+  font-family:var(--font-mono);
+  font-size:var(--t-etiqueta);
+  padding:5px 7px;
+}
 .fila-ok td:first-child,.fila-normal td:first-child{box-shadow:inset 3px 0 0 var(--ok)}
 .fila-inactiva td:first-child{box-shadow:inset 3px 0 0 var(--border)}
 .fila-advertencia td:first-child{box-shadow:inset 3px 0 0 var(--warn)}

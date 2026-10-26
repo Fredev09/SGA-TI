@@ -55,7 +55,7 @@
     <span class="chip">ISO 9.1.1 / 6.2</span>
   </div>
   {% if mediciones %}
-  <div class="tabla-contenedor">
+  <div class="tabla-contenedor" data-paginar data-tamano="5">
     <table class="tabla">
       <thead>
         <tr>
@@ -174,7 +174,7 @@
       {{ resumen_nc.activas }} activa{{ resumen_nc.activas|pluralize }}
     </p>
     {% if nc_activas %}
-    <ul class="lista-nc">
+    <ul class="lista-nc" data-paginar data-tamano="5">
       {% for no_conformidad in nc_activas %}
       <li class="ficha-nc">
         <div class="ficha-nc-cabecera">

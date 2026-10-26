@@ -41,6 +41,17 @@ class PlantillaBasePruebas(TestCase):
         respuesta = self.client.get(reverse("core:inicio"))
         self.assertEqual(respuesta.headers.get("Cache-Control"), "no-store")
 
+    def test_paneles_crecientes_se_paginan(self):
+        responsable = crear_usuario(
+            username="base-res",
+            password=self.clave,
+            rol=Usuario.Rol.RESPONSABLE_SGA,
+        )
+        self.client.force_login(responsable)
+        respuesta = self.client.get(reverse("cuentas:usuarios"))
+        self.assertContains(respuesta, "data-paginar")
+        self.assertContains(respuesta, "js/paginador.js")
+
 
 class PaginasDeErrorPruebas(TestCase):
     def setUp(self):

@@ -8,7 +8,12 @@ def estado_base_datos(request):
 
 def version_estaticos(request):
     marcas = []
-    for relativa in ("static/css/base.css", "static/js/preferencias.js"):
+    for relativa in (
+        "static/css/base.css",
+        "static/js/preferencias.js",
+        "static/js/avisos.js",
+        "static/js/paginador.js",
+    ):
         try:
             marcas.append(int((Path(settings.BASE_DIR) / relativa).stat().st_mtime))
         except OSError:

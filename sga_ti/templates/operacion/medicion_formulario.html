@@ -202,7 +202,7 @@
         <span class="contador">{{ mis_mediciones|length }}</span>
       </div>
       {% if mis_mediciones %}
-      <ul class="lista-registros">
+      <ul class="lista-registros" data-paginar data-tamano="5">
         {% for medicion in mis_mediciones %}
         <li>
           <span class="codigo">{{ medicion.indicador.codigo }}</span> · {{ medicion.nombre_mes }} {{ medicion.anio }}
@@ -226,7 +226,7 @@
     <span class="chip">RF-07 · ISO 7.5.3</span>
   </div>
   {% if bitacora %}
-  <div class="tabla-contenedor bitacora-contenedor">
+  <div class="tabla-contenedor bitacora-contenedor" data-paginar data-tamano="10">
     <table class="tabla">
       <thead>
         <tr>
