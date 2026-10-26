@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block titulo %}Reportes{% endblock %}
+{% block titulo_pagina %}Reportes{% endblock %}
+{% block subtitulo_pagina %}RF-06 · ISO 9.1.1 / 9.3 · Reporte consolidado para la revisión por la dirección{% endblock %}
+{% block contenido %}
+<div class="barra">
+  <form method="get" class="filtros">
+    <label for="filtro-anio">Año</label>
+    <input type="number" id="filtro-anio" name="anio" value="{{ anio }}" min="1000" max="9999">
+    <label for="filtro-mes">Corte</label>
+    <select id="filtro-mes" name="mes">
+      <option value="">Todo el año</option>
+      {% for numero_mes, nombre_mes in MESES %}
+      <option value="{{ numero_mes }}" {% if mes == numero_mes %}selected{% endif %}>{{ nombre_mes }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="boton">Aplicar</button>
+  </form>
+  <a href="{% url 'gestion:reportes_csv' %}?anio={{ anio }}{% if mes %}&amp;mes={{ mes }}{% endif %}" class="boton boton-primario">Descargar CSV</a>
+</div>
+
+<div class="rejilla-datos">
+  <section class="tarjeta tarjeta-compacta">
+    <p class="kpi-etiqueta">Cumplimiento de metas</p>
+    <p class="kpi-valor">{{ resumen.cumplimiento }}<span class="kpi-unidad">%</span></p>
+    <p class="banda-nota">{{ resumen.cumplidas }} de {{ resumen.total }} mediciones dentro de la meta</p>
+  </section>
+  <section class="tarjeta tarjeta-compacta">
+    <p class="kpi-etiqueta">IRNC</p>
+    <p class="kpi-valor">{{ nc.irnc }}<span class="kpi-unidad">%</span></p>
+    <p class="banda-nota">{{ nc.cerradas }} cerradas de {{ nc.total }} registradas en el año</p>
+  </section>
+  <section class="tarjeta tarjeta-compacta">
+    <p class="kpi-etiqueta">Mediciones del periodo</p>
+    <p class="kpi-valor">{{ resumen.total }}</p>
+    <p class="banda-nota">{{ conteo.NORMAL }} normal{{ conteo.NORMAL|pluralize:",es" }} · {{ conteo.ADVERTENCIA }} advertencia{{ conteo.ADVERTENCIA|pluralize }} · {{ conteo.ALERTA }} alerta{{ conteo.ALERTA|pluralize }}</p>
+  </section>
+  <section class="tarjeta tarjeta-compacta">
+    <p class="kpi-etiqueta">No conformidades activas</p>
+    <p class="kpi-valor">{{ nc.activas }}</p>
+    <p class="banda-nota">{{ nc.abiertas }} abierta{{ nc.abiertas|pluralize }} · {{ nc.en_analisis }} en análisis</p>
+  </section>
+</div>
+
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Mediciones del periodo</h2>
+      <p class="tarjeta-sub">{{ periodo }} · {{ resumen.total }} registro{{ resumen.total|pluralize }}</p>
+    </div>
+    <span class="chip">ISO 9.1.1</span>
+  </div>
+  {% if mediciones %}
+  <div class="tabla-contenedor">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th scope="col">Indicador</th>
+          <th scope="col">Periodo</th>
+          <th scope="col">Valor medido</th>
+          <th scope="col">Meta mensual</th>
+          <th scope="col">Desvío</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Evidencia</th>
+          <th scope="col">Registrada por</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for medicion in mediciones %}
+        <tr>
+          <td>
+            <strong>{{ medicion.indicador.nombre }}</strong><br>
+            <span class="codigo">{{ medicion.indicador.codigo }}</span> · {{ medicion.indicador.unidad_medida }}
+          </td>
+          <td class="codigo">{{ medicion.nombre_mes }} {{ medicion.anio }}</td>
+          <td class="codigo">{{ medicion.valor_medido }}</td>
+          <td class="codigo">{{ medicion.valor_meta }}</td>
+          <td class="codigo">{{ medicion.desvio_pct }} %</td>
+          <td><span class="pastilla pastilla-{{ medicion.estado_semaforo|lower }}">{{ medicion.get_estado_semaforo_display }}</span></td>
+          <td>{{ medicion.evidencia }}</td>
+          <td>{{ medicion.usuario.username }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="estado-vacio">Sin mediciones registradas para el periodo seleccionado.</p>
+  {% endif %}
+</section>
+
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">No conformidades por origen</h2>
+      <p class="tarjeta-sub">Año {{ anio }} · {{ nc.total }} registro{{ nc.total|pluralize }}</p>
+    </div>
+    <span class="chip">ISO 10.2</span>
+  </div>
+  <div class="tabla-contenedor">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th scope="col">Origen</th>
+          <th scope="col">Abiertas</th>
+          <th scope="col">Cerradas</th>
+          <th scope="col">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in balance %}
+        <tr>
+          <td>{{ fila.origen }}</td>
+          <td class="codigo">{{ fila.abiertas }}</td>
+          <td class="codigo">{{ fila.cerradas }}</td>
+          <td class="codigo">{{ fila.total }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

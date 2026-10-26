@@ -6,7 +6,10 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from cuentas.permisos import requiere_rol
+from operacion import servicios as operacion_servicios
+from operacion.models import MESES
 
+from . import reportes as reportes_servicios
 from . import servicios
 from .forms import (
     FormularioAccion,
@@ -232,6 +235,24 @@ def cerrar(request, nc_id):
         return redirect("gestion:detalle", nc_id=no_conformidad.pk)
     messages.success(request, "No conformidad %s cerrada." % no_conformidad.codigo)
     return redirect("gestion:detalle", nc_id=no_conformidad.pk)
+
+
+@requiere_rol("generar_reportes")
+def reportes(request):
+    anio = operacion_servicios.normalizar_anio(request.GET.get("anio"))
+    mes = operacion_servicios.normalizar_mes(request.GET.get("mes"))
+    contexto = reportes_servicios.datos_reporte(anio, mes)
+    contexto["MESES"] = MESES
+    return render(request, "gestion/reportes.html", contexto)
+
+
+@requiere_rol("generar_reportes")
+def reportes_csv(request):
+    anio = operacion_servicios.normalizar_anio(request.GET.get("anio"))
+    mes = operacion_servicios.normalizar_mes(request.GET.get("mes"))
+    return reportes_servicios.respuesta_csv(
+        reportes_servicios.datos_reporte(anio, mes)
+    )
 
 
 @requiere_rol("gestionar_no_conformidades")

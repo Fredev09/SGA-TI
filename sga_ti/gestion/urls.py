@@ -6,8 +6,7 @@ app_name = "gestion"
 
 urlpatterns = [
     path("no-conformidades/", views.lista, name="lista"),
-    path("no-conformidades/nueva/", views.nueva, name="nueva"),
-    path("no-conformidades/<uuid:nc_id>/", views.detalle, name="detalle"),
+    path("no-conformidades/nueva/", views.nueva, name="nueva"),    path("no-conformidades/<uuid:nc_id>/", views.detalle, name="detalle"),
     path("no-conformidades/<uuid:nc_id>/causa/", views.causa_raiz, name="causa_raiz"),
     path("no-conformidades/<uuid:nc_id>/acciones/", views.nueva_accion, name="nueva_accion"),
     path(
@@ -26,4 +25,6 @@ urlpatterns = [
         views.descargar_evidencia,
         name="descargar_evidencia",
     ),
+    path("reportes/", views.reportes, name="reportes"),
+    path("reportes/exportar/", views.reportes_csv, name="reportes_csv"),
 ]

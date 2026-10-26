@@ -17,9 +17,14 @@
     </select>
     <button type="submit" class="boton">Aplicar</button>
   </form>
-  {% if user|tiene_permiso:"registrar_medicion" %}
-  <a href="{% url 'operacion:medicion_nueva' %}" class="boton boton-primario">Registrar medición</a>
-  {% endif %}
+  <div class="acciones">
+    {% if user|tiene_permiso:"registrar_medicion" %}
+    <a href="{% url 'operacion:medicion_nueva' %}" class="boton boton-primario">Registrar medición</a>
+    {% endif %}
+    {% if user|tiene_permiso:"generar_reportes" %}
+    <a href="{% url 'gestion:reportes_csv' %}?anio={{ anio }}{% if mes %}&amp;mes={{ mes }}{% endif %}" class="boton">Exportar CSV</a>
+    {% endif %}
+  </div>
 </div>
 
 <section class="banda">

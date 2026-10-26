@@ -30,6 +30,10 @@
       <path d="M10.3 3.9 2.5 17.4a1.6 1.6 0 0 0 1.4 2.4h16.2a1.6 1.6 0 0 0 1.4-2.4L13.7 3.9a1.6 1.6 0 0 0-2.8 0Z"></path>
       <path d="M12 9v4M12 16.5v.5"></path>
     </symbol>
+    <symbol id="icono-reporte" viewBox="0 0 24 24">
+      <path d="M6 3h8l4 4v14H6z"></path>
+      <path d="M14 3v4h4M9 12h6M9 16h6"></path>
+    </symbol>
     <symbol id="icono-metas" viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="9"></circle>
       <circle cx="12" cy="12" r="5"></circle>
@@ -59,8 +63,13 @@
         </a>
         {% endif %}
         {% if user|tiene_permiso:"gestionar_no_conformidades" %}
-        <a class="nav-item{% if request.resolver_match.app_name == 'gestion' %} active{% endif %}" href="{% url 'gestion:lista' %}">
+        <a class="nav-item{% if request.resolver_match.app_name == 'gestion' and request.resolver_match.url_name != 'reportes' %} active{% endif %}" href="{% url 'gestion:lista' %}">
           <svg class="nav-icono" aria-hidden="true"><use href="#icono-alerta"></use></svg>No conformidades
+        </a>
+        {% endif %}
+        {% if user|tiene_permiso:"generar_reportes" %}
+        <a class="nav-item{% if request.resolver_match.url_name == 'reportes' %} active{% endif %}" href="{% url 'gestion:reportes' %}">
+          <svg class="nav-icono" aria-hidden="true"><use href="#icono-reporte"></use></svg>Reportes
         </a>
         {% endif %}
         <p class="nav-group">Grupo configuración SGA</p>
