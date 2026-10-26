@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block titulo %}Parámetros e indicadores{% endblock %}
+{% block contenido %}
+<section class="panel">
+  <div class="panel-cabecera">
+    <div>
+      <h1>Parámetros de metas e indicadores</h1>
+      <p class="panel-sub">RF-02 · Cláusula 6.2 · Objetivos y metas ambientales cuantificables</p>
+    </div>
+    <div class="acciones">
+      <a href="{% url 'ambiental:indicador_nuevo' %}" class="boton">Nuevo indicador</a>
+      <a href="{% url 'ambiental:meta_nueva' %}" class="boton boton-primario">Nueva meta</a>
+    </div>
+  </div>
+
+  <form method="get" class="filtros">
+    <label for="filtro-anio">Año de vigencia</label>
+    <input type="number" id="filtro-anio" name="anio" value="{{ anio }}" min="1000" max="9999">
+    <button type="submit" class="boton">Ver año</button>
+  </form>
+
+  {% if total_sin_meta %}
+  <div class="alerta" role="status">
+    <span class="alerta-marca" aria-hidden="true"></span>
+    <div class="alerta-cuerpo">
+      <strong>Indicador sin meta vigente</strong>
+      <p>{{ total_sin_meta }} indicador{{ total_sin_meta|pluralize }} aún no tiene meta para {{ anio }}. Completa el límite mensual y el umbral preventivo para cerrar la parametrización.</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="seccion">
+    <div class="cabecera-seccion">
+      <h2>Indicadores <span class="contador">Registros: {{ indicadores|length }}</span></h2>
+    </div>
+    {% if indicadores %}
+    <div class="tabla-contenedor">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th scope="col">Código</th>
+            <th scope="col">Indicador</th>
+            <th scope="col">Aspecto</th>
+            <th scope="col">Unidad</th>
+            <th scope="col">Periodicidad</th>
+            <th scope="col">Meta {{ anio }}</th>
+            <th scope="col">Valor de activación</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for indicador in indicadores %}
+          {% with meta=indicador.metas_anio|first %}
+          <tr>
+            <td class="codigo">{{ indicador.codigo }}</td>
+            <td>{{ indicador.nombre }}</td>
+            <td>{{ indicador.aspecto.nombre }}</td>
+            <td class="codigo">{{ indicador.unidad_medida }}</td>
+            <td>{{ indicador.periodicidad }}</td>
+            <td>
+              {% if meta %}
+              <span class="codigo">{{ meta.operador }} {{ meta.valor_limite }}</span>
+              <span class="muted"> · umbral {{ meta.umbral_advertencia_pct }}%</span>
+              {% else %}
+              <span class="alerta-texto">Sin meta</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if meta %}
+              <span class="codigo">{{ meta.valor_activacion }}</span>
+              {% else %}
+              <span class="muted">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if meta %}
+              <span class="pastilla pastilla-ok">Parametrizado</span>
+              {% else %}
+              <a class="enlace-accion" href="{% url 'ambiental:meta_nueva' %}?indicador={{ indicador.pk }}">Asignar meta</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="estado-vacio">Aún no hay indicadores registrados. Crea el primero para empezar a parametrizar sus metas.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
