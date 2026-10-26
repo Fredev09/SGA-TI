@@ -103,3 +103,28 @@ class FormularioMeta(forms.ModelForm):
         self.fields["anio_vigencia"].help_text = "Ejercicio fiscal en que rige la meta."
         self.fields["valor_limite"].help_text = "Máximo mensual permitido, numérico positivo."
         self.fields["umbral_advertencia_pct"].help_text = "Entre 50 y 99 por ciento."
+
+
+class FormularioMetaEdicion(forms.ModelForm):
+    class Meta:
+        model = MetaAmbiental
+        fields = ["valor_limite", "umbral_advertencia_pct"]
+        labels = {
+            "valor_limite": "Límite mensual permitido",
+            "umbral_advertencia_pct": "Umbral de advertencia (%)",
+        }
+        error_messages = {
+            "valor_limite": {
+                "required": "Ingrese el límite mensual de la meta.",
+                "invalid": "El límite mensual debe ser un número.",
+            },
+            "umbral_advertencia_pct": {
+                "required": "Ingrese el umbral de advertencia.",
+                "invalid": "El umbral de advertencia debe ser un número.",
+            },
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["valor_limite"].help_text = "Máximo mensual permitido, numérico positivo."
+        self.fields["umbral_advertencia_pct"].help_text = "Entre 50 y 99 por ciento."

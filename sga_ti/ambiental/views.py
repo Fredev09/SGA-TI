@@ -1,13 +1,19 @@
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from uuid import UUID
 
 from cuentas.permisos import requiere_rol
 
 from . import servicios
-from .forms import FormularioAspecto, FormularioIndicador, FormularioMeta, FormularioProceso
-from .models import Indicador
+from .forms import (
+    FormularioAspecto,
+    FormularioIndicador,
+    FormularioMeta,
+    FormularioMetaEdicion,
+    FormularioProceso,
+)
+from .models import Indicador, MetaAmbiental
 
 
 @requiere_rol("modificar_aspectos")
@@ -136,3 +142,23 @@ def meta_nueva(request):
         "url_cancelar": "ambiental:parametrizacion",
     }
     return render(request, "ambiental/formulario.html", contexto)
+
+
+@requiere_rol("modificar_metas")
+def meta_editar(request, meta_id):
+    meta = get_object_or_404(
+        MetaAmbiental.objects.select_related("indicador"), pk=meta_id
+    )
+    formulario = FormularioMetaEdicion(request.POST or None, instance=meta)
+    if request.method == "POST" and formulario.is_valid():
+        formulario.save()
+        messages.success(
+            request,
+            "Meta %s de %s actualizada." % (meta.anio_vigencia, meta.indicador.codigo),
+        )
+        return redirect("ambiental:parametrizacion")
+    return render(
+        request,
+        "ambiental/meta_editar.html",
+        {"form": formulario, "meta": meta},
+    )

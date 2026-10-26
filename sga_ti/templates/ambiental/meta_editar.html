@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titulo %}Editar meta{% endblock %}
+{% block titulo_pagina %}Editar meta{% endblock %}
+{% block subtitulo_pagina %}RF-02 · ISO 6.2 · {{ meta.indicador.codigo }} · {{ meta.anio_vigencia }}{% endblock %}
+{% block contenido %}
+{% include "includes/tabs_configuracion.html" with activo="metas" %}
+
+<section class="tarjeta tarjeta-formulario">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">{{ meta.indicador.nombre }}</h2>
+      <p class="tarjeta-sub">Meta del año {{ meta.anio_vigencia }} · Unidad {{ meta.indicador.unidad_medida }}</p>
+    </div>
+    <span class="chip">ISO 6.2</span>
+  </div>
+
+  <dl class="ficha">
+    <dt>Indicador</dt>
+    <dd><span class="codigo">{{ meta.indicador.codigo }}</span> · {{ meta.indicador.nombre }}</dd>
+    <dt>Año de vigencia</dt>
+    <dd>{{ meta.anio_vigencia }}</dd>
+    <dt>Operador</dt>
+    <dd class="codigo">{{ meta.operador }}</dd>
+    <dt>Valor de activación actual</dt>
+    <dd class="codigo">{{ meta.valor_activacion }} {{ meta.indicador.unidad_medida }}</dd>
+  </dl>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <ul class="errores">
+      {% for error in form.non_field_errors %}
+      <li class="error">{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% for campo in form %}
+    <div class="campo">
+      <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+      {{ campo }}
+      {% for error in campo.errors %}
+      <p class="error">{{ error }}</p>
+      {% endfor %}
+      {% if campo.help_text %}
+      <p class="ayuda">{{ campo.help_text }}</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+    <p class="ayuda">El valor de activación se recalcula como límite mensual × umbral / 100 al guardar.</p>
+    <div class="acciones">
+      <button type="submit" class="boton boton-primario">Guardar meta</button>
+      <a href="{% url 'ambiental:parametrizacion' %}" class="boton">Cancelar</a>
+    </div>
+  </form>
+  <p class="ayuda">Las mediciones ya registradas conservan el valor de meta, el desvío y el estado con que fueron guardadas.</p>
+</section>
+{% endblock %}

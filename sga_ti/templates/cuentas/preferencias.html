@@ -1,46 +1,122 @@
 {% extends "base.html" %}
 {% block titulo %}Preferencias del sistema{% endblock %}
 {% block titulo_pagina %}Preferencias del sistema{% endblock %}
-{% block subtitulo_pagina %}RNF-01 · Tema de la interfaz y persistencia de datos{% endblock %}
+{% block subtitulo_pagina %}Apariencia y persistencia de la sesión{% endblock %}
 {% block contenido %}
-<section class="tarjeta">
-  <div class="tarjeta-cabecera">
-    <div>
-      <h2 class="tarjeta-titulo">Tema de la interfaz</h2>
-      <p class="tarjeta-sub">La preferencia se guarda en este navegador; el tema claro es el predeterminado</p>
+{% include "includes/tabs_configuracion.html" with activo="preferencias" %}
+
+<div class="rejilla rejilla-igualada">
+  <section class="tarjeta">
+    <div class="tarjeta-cabecera">
+      <div>
+        <h2 class="tarjeta-titulo">Tema de interfaz</h2>
+        <p class="tarjeta-sub">La selección se aplica de forma global y se conserva en el navegador</p>
+      </div>
+      <span class="chip">RNF-01</span>
     </div>
-    <span class="chip">RNF-01</span>
-  </div>
-  <div class="opciones-tema">
-    <label class="opcion-tema" for="tema-claro">
-      <input type="radio" id="tema-claro" name="tema" value="claro" data-tema checked>
-      <span class="muestra muestra-claro" aria-hidden="true"></span>
-      Modo claro
-    </label>
-    <label class="opcion-tema" for="tema-oscuro">
-      <input type="radio" id="tema-oscuro" name="tema" value="oscuro" data-tema>
-      <span class="muestra muestra-oscuro" aria-hidden="true"></span>
-      Modo oscuro
-    </label>
-  </div>
-  <p class="ayuda">El cambio se aplica al instante y se conserva mientras uses este navegador.</p>
-</section>
+    <div class="opciones-tema">
+      <label class="opcion-tema" for="tema-oscuro">
+        <input type="radio" id="tema-oscuro" name="tema" value="oscuro" data-tema>
+        <span class="muestra muestra-oscuro" aria-hidden="true"></span>
+        <span class="opcion-texto">
+          <strong>Modo oscuro</strong>
+          <small>Consola técnica · fondo #16191e</small>
+        </span>
+      </label>
+      <label class="opcion-tema" for="tema-claro">
+        <input type="radio" id="tema-claro" name="tema" value="claro" data-tema checked>
+        <span class="muestra muestra-claro" aria-hidden="true"></span>
+        <span class="opcion-texto">
+          <strong>Modo claro</strong>
+          <small>Alto contraste diurno · fondo #eef1f6</small>
+        </span>
+      </label>
+    </div>
+    <p class="ayuda">El cambio se aplica al instante y se conserva mientras uses este navegador.</p>
+
+    <div class="seccion">
+      <div class="cabecera-seccion">
+        <h2>Tamaño del texto</h2>
+      </div>
+      <div class="opciones-fuente">
+        <label class="opcion-fuente" for="fuente-compacta">
+          <input type="radio" id="fuente-compacta" name="fuente" value="compacta" data-fuente>
+          Compacta
+        </label>
+        <label class="opcion-fuente" for="fuente-normal">
+          <input type="radio" id="fuente-normal" name="fuente" value="normal" data-fuente checked>
+          Normal
+        </label>
+        <label class="opcion-fuente" for="fuente-amplia">
+          <input type="radio" id="fuente-amplia" name="fuente" value="amplia" data-fuente>
+          Amplia
+        </label>
+      </div>
+      <p class="ayuda">Ajusta títulos, tablas y formularios sin cambiar de página.</p>
+    </div>
+  </section>
+
+  <aside class="lateral">
+    <section class="tarjeta">
+      <div class="tarjeta-cabecera">
+        <div>
+          <h2 class="tarjeta-titulo">Entorno de la sesión</h2>
+          <p class="tarjeta-sub">Datos de la cuenta y estado técnico</p>
+        </div>
+        <span class="chip">Control de acceso</span>
+      </div>
+      <dl class="ficha">
+        <dt>Usuario</dt>
+        <dd>{{ user.get_full_name|default:user.username }}</dd>
+        <dt>Rol</dt>
+        <dd>{{ user.get_rol_display }}</dd>
+        <dt>Organización</dt>
+        <dd>CloudTech Solutions S.A.S.</dd>
+        <dt>Norma aplicada</dt>
+        <dd>ISO 14001:2015</dd>
+        <dt>Tema activo</dt>
+        <dd data-tema-activo>Modo claro</dd>
+        <dt>Tamaño</dt>
+        <dd data-fuente-activo>Normal</dd>
+        <dt>Almacenamiento</dt>
+        <dd>{% if base_en_nube %}PostgreSQL en la nube y SQLite local{% else %}SQLite local{% endif %}</dd>
+      </dl>
+    </section>
+  </aside>
+</div>
 
 <section class="tarjeta">
   <div class="tarjeta-cabecera">
     <div>
-      <h2 class="tarjeta-titulo">Persistencia de datos</h2>
-      <p class="tarjeta-sub">Estado real de la configuración del sistema</p>
+      <h2 class="tarjeta-titulo">Motor de persistencia de datos</h2>
+      <p class="tarjeta-sub">Origen de verdad para mediciones, no conformidades y bitácora de auditoría</p>
     </div>
-    <span class="chip">RNF-03</span>
+    <span class="chip">RNF-02 · RNF-03</span>
   </div>
-  <dl class="ficha">
-    <dt>Base local</dt>
-    <dd>SQLite activa para operación sin conexión</dd>
-    <dt>Sincronización externa</dt>
-    <dd>No configurada; el servicio en la nube sigue pendiente de definir</dd>
-    <dt>Evidencias</dt>
-    <dd>Archivos locales fuera del repositorio, con descarga autorizada</dd>
-  </dl>
+  <div class="opciones-tema">
+    <div class="opcion-tema opcion-estado {% if not base_en_nube %}opcion-activa{% endif %}">
+      <span class="punto {% if not base_en_nube %}punto-ok{% else %}punto-pendiente{% endif %}" aria-hidden="true"></span>
+      <span class="opcion-texto">
+        <strong>Base de datos local</strong>
+        <small>SQLite para operación sin conexión</small>
+      </span>
+    </div>
+    <div class="opcion-tema opcion-estado {% if base_en_nube %}opcion-activa{% endif %}">
+      <span class="punto {% if base_en_nube %}punto-ok{% else %}punto-pendiente{% endif %}" aria-hidden="true"></span>
+      <span class="opcion-texto">
+        <strong>Base de datos en la nube</strong>
+        <small>PostgreSQL en Neon, configurada por variable de entorno</small>
+      </span>
+    </div>
+  </div>
+  <p class="ayuda">
+    {% if base_en_nube %}
+    La sesión actual escribe en PostgreSQL. SQLite se conserva como respaldo local.
+    {% else %}
+    La sesión actual escribe en SQLite. La base en la nube no está configurada en este entorno.
+    {% endif %}
+    La sincronización automática entre ambas no está implementada.
+  </p>
+  <p class="ayuda">Las evidencias se guardan fuera del repositorio y se descargan solo con permiso.</p>
 </section>
 {% endblock %}

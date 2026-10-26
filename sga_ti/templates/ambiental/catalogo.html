@@ -4,12 +4,7 @@
 {% block titulo_pagina %}Aspectos ambientales{% endblock %}
 {% block subtitulo_pagina %}RF-01 · ISO 6.1.2 · Matriz de aspectos e impactos{% endblock %}
 {% block contenido %}
-<div class="tabs">
-  <a class="tab tab-activo" href="{% url 'ambiental:catalogo' %}" aria-current="page">Aspectos ambientales</a>
-  {% if user|tiene_permiso:"modificar_indicadores" %}
-  <a class="tab" href="{% url 'ambiental:parametrizacion' %}">Metas e indicadores</a>
-  {% endif %}
-</div>
+{% include "includes/tabs_configuracion.html" with activo="aspectos" %}
 
 {% if aspectos_sin_indicador %}
 <div class="alerta" role="alert">

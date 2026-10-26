@@ -383,6 +383,16 @@ class CicloNoConformidadPruebas(TestCase):
         no_conformidad.refresh_from_db()
         self.assertEqual(no_conformidad.estado, estado_antes)
 
+    def test_peticion_de_evidencia_demasiado_grande_se_rechaza(self):
+        no_conformidad = self._hallazgo()
+        respuesta = self.cliente.post(
+            reverse("gestion:nueva_evidencia", args=[no_conformidad.pk]),
+            data=None,
+            CONTENT_LENGTH=str(7 * 1024 * 1024),
+        )
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertFalse(EvidenciaNoConformidad.objects.exists())
+
     def test_operador_no_puede_adjuntar_evidencia(self):
         no_conformidad = self._hallazgo()
         operador = Client()

@@ -1,0 +1,13 @@
+{% load etiquetas %}
+<div class="tabs">
+  {% if user|tiene_permiso:"modificar_aspectos" %}
+  <a class="tab{% if activo == 'aspectos' %} tab-activo{% endif %}" href="{% url 'ambiental:catalogo' %}"{% if activo == 'aspectos' %} aria-current="page"{% endif %}>Aspectos ambientales</a>
+  {% endif %}
+  {% if user|tiene_permiso:"modificar_indicadores" %}
+  <a class="tab{% if activo == 'metas' %} tab-activo{% endif %}" href="{% url 'ambiental:parametrizacion' %}"{% if activo == 'metas' %} aria-current="page"{% endif %}>Metas e indicadores</a>
+  {% endif %}
+  {% if user|tiene_permiso:"modificar_usuarios" %}
+  <a class="tab{% if activo == 'usuarios' %} tab-activo{% endif %}" href="{% url 'cuentas:usuarios' %}"{% if activo == 'usuarios' %} aria-current="page"{% endif %}>Usuarios y roles</a>
+  {% endif %}
+  <a class="tab{% if activo == 'preferencias' %} tab-activo{% endif %}" href="{% url 'cuentas:preferencias' %}"{% if activo == 'preferencias' %} aria-current="page"{% endif %}>Preferencias del sistema</a>
+</div>

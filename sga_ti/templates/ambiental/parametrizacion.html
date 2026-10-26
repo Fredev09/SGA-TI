@@ -4,12 +4,7 @@
 {% block titulo_pagina %}Metas e indicadores{% endblock %}
 {% block subtitulo_pagina %}RF-02 · ISO 6.2 · Parámetros de los indicadores{% endblock %}
 {% block contenido %}
-<div class="tabs">
-  {% if user|tiene_permiso:"modificar_aspectos" %}
-  <a class="tab" href="{% url 'ambiental:catalogo' %}">Aspectos ambientales</a>
-  {% endif %}
-  <a class="tab tab-activo" href="{% url 'ambiental:parametrizacion' %}" aria-current="page">Metas e indicadores</a>
-</div>
+{% include "includes/tabs_configuracion.html" with activo="metas" %}
 
 {% if total_sin_meta %}
 <div class="alerta" role="status">
@@ -53,6 +48,7 @@
           <th scope="col">Umbral de advertencia</th>
           <th scope="col">Operador</th>
           <th scope="col">Estado</th>
+          <th scope="col">Acción</th>
         </tr>
       </thead>
       <tbody>
@@ -66,7 +62,7 @@
             {% if meta %}
             {{ meta.valor_limite }}
             {% else %}
-            <span class="alerta-texto">Sin meta</span>
+            <span class="muted">—</span>
             {% endif %}
           </td>
           <td>
@@ -87,6 +83,13 @@
           <td>
             {% if meta %}
             <span class="pastilla pastilla-ok">Parametrizado</span>
+            {% else %}
+            <span class="alerta-texto">Sin meta</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if meta %}
+            <a class="enlace-accion" href="{% url 'ambiental:meta_editar' meta.pk %}">Editar</a>
             {% else %}
             <a class="enlace-accion" href="{% url 'ambiental:meta_nueva' %}?indicador={{ indicador.pk }}">Asignar meta</a>
             {% endif %}

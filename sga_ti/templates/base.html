@@ -6,8 +6,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}SGA-TI{% endblock %} · CloudTech Solutions S.A.S.</title>
-  <link rel="stylesheet" href="{% static 'css/base.css' %}">
-  <script src="{% static 'js/tema.js' %}" defer></script>
+  <link rel="stylesheet" href="{% static 'css/base.css' %}?v={{ version_estaticos }}">
+  <script src="{% static 'js/preferencias.js' %}?v={{ version_estaticos }}" defer></script>
+  <script src="{% static 'js/avisos.js' %}?v={{ version_estaticos }}" defer></script>
   {% block css %}{% endblock %}
 </head>
 <body>
@@ -127,17 +128,20 @@
   <div class="acceso">
       <main class="views views-acceso">
 {% endif %}
-        {% if messages %}
-        <ul class="mensajes">
-          {% for mensaje in messages %}
-          <li class="mensaje mensaje-{{ mensaje.tags }}">{{ mensaje }}</li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-        {% block contenido %}{% endblock %}
+      {% block contenido %}{% endblock %}
       </main>
     </div>
     {% if user.is_authenticated %}</div>
     {% endif %}
+  {% if messages %}
+  <div class="toasts" aria-live="polite">
+    {% for mensaje in messages %}
+    <div class="toast toast-{{ mensaje.tags }}">
+      <p>{{ mensaje }}</p>
+      <button type="button" class="toast-cerrar" aria-label="Cerrar notificación">×</button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 </body>
 </html>

@@ -1,7 +1,7 @@
 import secrets
 
 from django.contrib.auth import authenticate
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from cuentas.models import Usuario
@@ -200,3 +200,33 @@ class UsuariosPruebas(TestCase):
         respuesta_operador = operador.get(reverse("core:inicio"))
         self.assertNotContains(respuesta_operador, "Usuarios y roles")
         self.assertContains(respuesta_operador, "Preferencias del sistema")
+
+    def test_preferencias_ofrece_tamano_de_texto(self):
+        respuesta = self.cliente.get(reverse("cuentas:preferencias"))
+        self.assertContains(respuesta, "Tamaño del texto")
+        self.assertContains(respuesta, "data-fuente")
+        self.assertContains(respuesta, "Compacta")
+        self.assertContains(respuesta, "Amplia")
+
+    def test_configuracion_muestra_las_cuatro_pestanas(self):
+        for nombre in ("cuentas:usuarios", "cuentas:preferencias"):
+            respuesta = self.cliente.get(reverse(nombre))
+            self.assertContains(respuesta, "Aspectos ambientales")
+            self.assertContains(respuesta, "Metas e indicadores")
+            self.assertContains(respuesta, "Usuarios y roles")
+            self.assertContains(respuesta, "Preferencias del sistema")
+
+    def test_operador_solo_ve_preferencias_en_configuracion(self):
+        operador = Client()
+        operador.login(username="keiner", password=self.clave)
+        respuesta = operador.get(reverse("cuentas:preferencias"))
+        self.assertContains(respuesta, "Preferencias del sistema")
+        self.assertNotContains(respuesta, "Metas e indicadores")
+        self.assertNotContains(respuesta, "Usuarios y roles")
+
+    def test_preferencias_indica_el_motor_de_datos(self):
+        respuesta = self.cliente.get(reverse("cuentas:preferencias"))
+        self.assertContains(respuesta, "SQLite local")
+        with override_settings(URL_BASE_DATOS="postgresql://usuario:clave@host/base"):
+            respuesta = self.cliente.get(reverse("cuentas:preferencias"))
+        self.assertContains(respuesta, "PostgreSQL en la nube")

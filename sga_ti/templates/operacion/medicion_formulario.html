@@ -9,7 +9,7 @@
   <li class="paso{% if paso == 3 %} paso-activo{% endif %}"><span class="paso-numero">3</span>Confirmación y guardado</li>
 </ol>
 
-<div class="rejilla">
+<div class="rejilla rejilla-igualada">
   <section class="tarjeta rejilla-principal">
     {% if paso == 1 %}
     <div class="tarjeta-cabecera">
@@ -55,7 +55,8 @@
           <p class="ayuda">{{ form_periodo.mes.help_text }}</p>
         </div>
       </div>
-      <div class="acciones">
+      <p class="ayuda">El valor medido y la evidencia documental se registran en el paso 2.</p>
+      <div class="acciones acciones-derecha">
         <button type="submit" class="boton boton-primario">Siguiente</button>
         <a href="{% url 'core:inicio' %}" class="boton">Cancelar</a>
       </div>
@@ -97,7 +98,7 @@
         {% endfor %}
         <p class="ayuda">{{ form_valor.evidencia.help_text }}</p>
       </div>
-      <div class="acciones">
+      <div class="acciones acciones-derecha">
         <button type="submit" class="boton boton-primario">Siguiente</button>
         <button type="submit" name="volver" value="1" class="boton">Atrás</button>
       </div>
@@ -144,7 +145,7 @@
         {% endif %}
       </dl>
       <p class="ayuda">La medición quedará asociada a tu usuario. Si el estado es Alerta se creará automáticamente una no conformidad (RF-05).</p>
-      <div class="acciones">
+      <div class="acciones acciones-derecha">
         <button type="submit" class="boton boton-primario">Guardar medición</button>
         <button type="submit" name="volver" value="2" class="boton">Atrás</button>
       </div>
@@ -197,7 +198,7 @@
 
     <section class="tarjeta tarjeta-compacta">
       <div class="cabecera-seccion">
-        <h2>Tus registros</h2>
+        <h2>Registros de la sesión</h2>
         <span class="contador">{{ mis_mediciones|length }}</span>
       </div>
       {% if mis_mediciones %}
@@ -210,7 +211,7 @@
         {% endfor %}
       </ul>
       {% else %}
-      <p class="estado-vacio">Sin mediciones registradas por ti todavía.</p>
+      <p class="estado-vacio">Sin mediciones registradas en esta sesión.</p>
       {% endif %}
     </section>
   </aside>

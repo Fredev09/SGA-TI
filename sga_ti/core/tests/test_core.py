@@ -36,6 +36,11 @@ class PlantillaBasePruebas(TestCase):
         self.assertNotContains(respuesta, "IND-")
         self.assertNotContains(respuesta, "NC-")
 
+    def test_paginas_autenticadas_no_se_cachean(self):
+        self.client.login(username="base-ope", password=self.clave)
+        respuesta = self.client.get(reverse("core:inicio"))
+        self.assertEqual(respuesta.headers.get("Cache-Control"), "no-store")
+
 
 class PaginasDeErrorPruebas(TestCase):
     def setUp(self):
@@ -79,6 +84,25 @@ class ConfiguracionPruebas(TestCase):
         from django.conf import settings
 
         self.assertNotIn("django.contrib.admin", settings.INSTALLED_APPS)
+
+    def test_configuracion_de_seguridad(self):
+        from django.conf import settings
+
+        self.assertTrue(settings.SESSION_COOKIE_HTTPONLY)
+        self.assertEqual(settings.SESSION_COOKIE_SAMESITE, "Lax")
+        self.assertEqual(settings.CSRF_COOKIE_SAMESITE, "Lax")
+        self.assertEqual(settings.X_FRAME_OPTIONS, "DENY")
+        self.assertTrue(settings.SECURE_CONTENT_TYPE_NOSNIFF)
+        self.assertEqual(settings.SECURE_REFERRER_POLICY, "same-origin")
+        self.assertLessEqual(settings.DATA_UPLOAD_MAX_NUMBER_FILES, 2)
+
+    def test_cabeceras_de_seguridad_en_la_respuesta(self):
+        respuesta = Client().get(reverse("cuentas:entrada"))
+        politica = respuesta.headers.get("Content-Security-Policy", "")
+        self.assertIn("default-src 'self'", politica)
+        self.assertIn("frame-ancestors 'none'", politica)
+        self.assertNotIn("unsafe-inline", politica)
+        self.assertEqual(respuesta.headers.get("Permissions-Policy"), "camera=(), microphone=(), geolocation=()")
 
     def test_los_datos_de_la_bd_no_estan_en_el_repositorio(self):
         from pathlib import Path

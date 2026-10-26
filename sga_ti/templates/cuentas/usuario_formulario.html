@@ -40,5 +40,20 @@
       <a href="{% url 'cuentas:usuarios' %}" class="boton">Cancelar</a>
     </div>
   </form>
+  {% if not creando %}
+  <div class="seccion">
+    <div class="cabecera-seccion">
+      <h2>Acciones de la cuenta</h2>
+    </div>
+    <div class="acciones">
+      <a href="{% url 'cuentas:usuario_contrasena' usuario.pk %}" class="boton">Restablecer contraseña</a>
+      <form method="post" action="{% url 'cuentas:usuario_estado' usuario.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="boton">{% if usuario.is_active %}Desactivar cuenta{% else %}Activar cuenta{% endif %}</button>
+      </form>
+    </div>
+    <p class="ayuda">Solo el Responsable del SGA asigna y restablece contraseñas. Las cuentas se desactivan, no se eliminan.</p>
+  </div>
+  {% endif %}
 </section>
 {% endblock %}

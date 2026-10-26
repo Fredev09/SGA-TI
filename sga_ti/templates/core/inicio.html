@@ -69,7 +69,7 @@
       </thead>
       <tbody>
         {% for medicion in mediciones %}
-        <tr>
+        <tr class="fila-{{ medicion.estado_semaforo|lower }}">
           <td>
             <strong>{{ medicion.indicador.nombre }}</strong><br>
             <span class="codigo">{{ medicion.indicador.codigo }}</span> · {{ medicion.indicador.unidad_medida }}<br>
@@ -112,15 +112,18 @@
         <p class="tarjeta-sub">Serie mensual de los indicadores con mediciones registradas</p>
         {% endif %}
       </div>
+      {% if indicadores %}
+      <div class="filtros">
+        {% for indicador in indicadores %}
+        <a class="boton{% if indicador.pk == indicador_seleccionado.pk %} boton-activo{% endif %}"
+           href="?anio={{ anio }}{% if mes %}&amp;mes={{ mes }}{% endif %}&amp;indicador={{ indicador.pk }}">{{ indicador.codigo }}</a>
+        {% endfor %}
+      </div>
+      {% else %}
       <span class="chip">Serie {{ anio }}</span>
+      {% endif %}
     </div>
     {% if indicadores %}
-    <div class="filtros">
-      {% for indicador in indicadores %}
-      <a class="boton{% if indicador.pk == indicador_seleccionado.pk %} boton-activo{% endif %}"
-         href="?anio={{ anio }}{% if mes %}&amp;mes={{ mes }}{% endif %}&amp;indicador={{ indicador.pk }}">{{ indicador.codigo }}</a>
-      {% endfor %}
-    </div>
     {% if tendencia %}
     <svg class="grafico" viewBox="0 0 680 260" role="img"
          aria-label="Tendencia mensual de {{ indicador_seleccionado.nombre }} en {{ anio }}">

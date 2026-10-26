@@ -34,10 +34,12 @@
     </div>
     <span class="chip">ISO 10.2</span>
   </div>
-  {% if no_conformidad.causa_raiz %}
-  <p>{{ no_conformidad.causa_raiz }}</p>
-  {% elif no_conformidad.estado == "CERRADA" %}
-  <p class="estado-vacio">Sin causa raíz registrada.</p>
+  {% if no_conformidad.estado == "CERRADA" %}
+    {% if no_conformidad.causa_raiz %}
+    <p>{{ no_conformidad.causa_raiz }}</p>
+    {% else %}
+    <p class="estado-vacio">Sin causa raíz registrada.</p>
+    {% endif %}
   {% endif %}
   {% if no_conformidad.estado != "CERRADA" %}
   <form method="post" action="{% url 'gestion:causa_raiz' no_conformidad.pk %}" novalidate>
@@ -97,30 +99,33 @@
       <p class="texto-suave">Evaluación de eficacia: {{ item.accion.evaluacion_eficacia }}</p>
       {% endif %}
       {% if no_conformidad.estado != "CERRADA" %}
-      <form method="post" action="{% url 'gestion:actualizar_accion' no_conformidad.pk item.accion.pk %}" novalidate>
-        {% csrf_token %}
-        {% for error in item.formulario.non_field_errors %}
-        <p class="error">{{ error }}</p>
-        {% endfor %}
-        <div class="accion-campos">
-          {% for campo in item.formulario %}
-            {% if campo.field.widget.input_type == "checkbox" %}
-            <label class="campo-check" for="{{ campo.id_for_label }}">{{ campo }} {{ campo.label }}</label>
-            {% else %}
-            <div class="campo">
-              <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
-              {{ campo }}
-              {% for error in campo.errors %}
-              <p class="error">{{ error }}</p>
-              {% endfor %}
-            </div>
-            {% endif %}
+      <details class="detalle-accion">
+        <summary>Actualizar ejecución y eficacia</summary>
+        <form method="post" action="{% url 'gestion:actualizar_accion' no_conformidad.pk item.accion.pk %}" novalidate>
+          {% csrf_token %}
+          {% for error in item.formulario.non_field_errors %}
+          <p class="error">{{ error }}</p>
           {% endfor %}
-        </div>
-        <div class="acciones">
-          <button type="submit" class="boton">Guardar acción</button>
-        </div>
-      </form>
+          <div class="accion-campos">
+            {% for campo in item.formulario %}
+              {% if campo.field.widget.input_type == "checkbox" %}
+              <label class="campo-check" for="{{ campo.id_for_label }}">{{ campo }} {{ campo.label }}</label>
+              {% else %}
+              <div class="campo">
+                <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                {{ campo }}
+                {% for error in campo.errors %}
+                <p class="error">{{ error }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+          <div class="acciones">
+            <button type="submit" class="boton">Guardar acción</button>
+          </div>
+        </form>
+      </details>
       {% endif %}
     </li>
     {% endfor %}

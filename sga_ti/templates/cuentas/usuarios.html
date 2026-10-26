@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 {% block titulo %}Usuarios y roles{% endblock %}
 {% block titulo_pagina %}Usuarios y roles{% endblock %}
-{% block subtitulo_pagina %}RNF-02 · ISO 5.3 · Directorio de cuentas y control de acceso{% endblock %}
+{% block subtitulo_pagina %}Directorio de usuarios y control de acceso{% endblock %}
 {% block contenido %}
-<div class="barra">
-  <p class="texto-suave">Solo el Responsable del SGA asigna y restablece contraseñas. Las cuentas se desactivan, no se eliminan.</p>
-  <a href="{% url 'cuentas:usuario_nuevo' %}" class="boton boton-primario">Nuevo usuario</a>
-</div>
+{% include "includes/tabs_configuracion.html" with activo="usuarios" %}
 
 <section class="tarjeta">
   <div class="tarjeta-cabecera">
     <div>
-      <h2 class="tarjeta-titulo">Directorio de usuarios</h2>
-      <p class="tarjeta-sub">Registros: {{ usuarios|length }}</p>
+      <h2 class="tarjeta-titulo">Directorio de usuarios y control de acceso (RBAC)</h2>
+      <p class="tarjeta-sub">Cláusula 5.3 · Asignación de responsabilidades y roles del SGA</p>
     </div>
-    <span class="chip">ISO 5.3</span>
+    <div class="ficha-nc-acciones">
+      <span class="chip">ISO 5.3 / RNF-02</span>
+      <a href="{% url 'cuentas:usuario_nuevo' %}" class="boton boton-primario">Nuevo usuario</a>
+    </div>
   </div>
   {% if usuarios %}
   <div class="tabla-contenedor">
@@ -22,44 +22,38 @@
       <thead>
         <tr>
           <th scope="col">Usuario</th>
-          <th scope="col">Nombre</th>
-          <th scope="col">Correo</th>
-          <th scope="col">Rol</th>
+          <th scope="col">Nombre completo</th>
+          <th scope="col">Correo corporativo</th>
+          <th scope="col">Rol asignado</th>
           <th scope="col">Estado</th>
-          <th scope="col">Acciones</th>
+          <th scope="col">Acción</th>
         </tr>
       </thead>
       <tbody>
         {% for usuario in usuarios %}
-        <tr>
+        <tr class="{% if usuario.is_active %}fila-ok{% else %}fila-inactiva{% endif %}">
           <td class="codigo">{{ usuario.username }}</td>
           <td>{{ usuario.get_full_name|default:"—" }}</td>
           <td>{{ usuario.email|default:"—" }}</td>
-          <td>{{ usuario.get_rol_display }}</td>
+          <td>
+            <span class="pastilla {% if usuario.rol == 'RESPONSABLE_SGA' %}pastilla-acento{% else %}pastilla-neutra{% endif %}">{{ usuario.get_rol_display }}</span>
+          </td>
           <td>
             {% if usuario.is_active %}
-            <span class="pastilla pastilla-ok">Activa</span>
+            <span class="pastilla pastilla-ok">Activo</span>
             {% else %}
-            <span class="pastilla pastilla-neutra">Inactiva</span>
+            <span class="pastilla pastilla-neutra">Inactivo</span>
             {% endif %}
           </td>
           <td>
-            <div class="acciones">
-              <a class="enlace-accion" href="{% url 'cuentas:usuario_editar' usuario.pk %}">Editar</a>
-              <a class="enlace-accion" href="{% url 'cuentas:usuario_contrasena' usuario.pk %}">Contraseña</a>
-              <form method="post" action="{% url 'cuentas:usuario_estado' usuario.pk %}">
-                {% csrf_token %}
-                <button type="submit" class="enlace-accion enlace-boton">
-                  {% if usuario.is_active %}Desactivar{% else %}Activar{% endif %}
-                </button>
-              </form>
-            </div>
+            <a href="{% url 'cuentas:usuario_editar' usuario.pk %}" class="boton">Editar</a>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+  <p class="ayuda">Solo el Responsable del SGA asigna y restablece contraseñas. Las cuentas se desactivan, no se eliminan.</p>
   {% else %}
   <p class="estado-vacio">No hay usuarios registrados.</p>
   {% endif %}

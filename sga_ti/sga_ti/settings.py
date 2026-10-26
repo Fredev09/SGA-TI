@@ -1,6 +1,7 @@
 import importlib.util
 import os
 from pathlib import Path
+from urllib.parse import parse_qsl, unquote, urlparse
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -23,7 +24,34 @@ else:
 
 DEBUG = os.environ.get("SGA_TI_DEBUG", "0") == "1"
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get("SGA_TI_HOSTS", "localhost,127.0.0.1").split(",")
+    if host.strip()
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    origen.strip()
+    for origen in os.environ.get("SGA_TI_ORIGENES_CSRF", "").split(",")
+    if origen.strip()
+]
+
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
+DATA_UPLOAD_MAX_NUMBER_FILES = 2
+
+if os.environ.get("SGA_TI_HTTPS") == "1":
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 INSTALLED_APPS = [
     "django.contrib.auth",
@@ -46,6 +74,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "core.middleware.CabecerasAdicionales",
 ]
 
 ROOT_URLCONF = "sga_ti.urls"
@@ -60,6 +89,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "core.contexto.estado_base_datos",
+                "core.contexto.version_estaticos",
             ],
         },
     },
@@ -73,14 +104,49 @@ EVIDENCIAS_RUTA = os.environ.get(
     "SGA_TI_EVIDENCIAS_PATH", str(Path.home() / "sga_ti_evidencias")
 )
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": SQLITE_RUTA,
+URL_BASE_DATOS = os.environ.get("SGA_TI_DATABASE_URL", "")
+
+
+def _configuracion_postgres(url):
+    partes = urlparse(url)
+    consulta = dict(parse_qsl(partes.query))
+    opciones = {}
+    if consulta.get("sslmode"):
+        opciones["sslmode"] = consulta["sslmode"]
+    if consulta.get("channel_binding"):
+        opciones["channel_binding"] = consulta["channel_binding"]
+    if "-pooler" in (partes.hostname or ""):
+        opciones["prepare_threshold"] = None
+    opciones["connect_timeout"] = 10
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": partes.path.lstrip("/"),
+        "USER": unquote(partes.username or ""),
+        "PASSWORD": unquote(partes.password or ""),
+        "HOST": partes.hostname or "",
+        "PORT": str(partes.port or 5432),
+        "OPTIONS": opciones,
     }
-}
+
+
+if URL_BASE_DATOS:
+    DATABASES = {"default": _configuracion_postgres(URL_BASE_DATOS)}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": SQLITE_RUTA,
+        }
+    }
 
 AUTH_USER_MODEL = "cuentas.Usuario"
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "sga-ti",
+    }
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
