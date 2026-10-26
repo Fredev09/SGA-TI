@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block titulo_pagina %}{{ titulo }}{% endblock %}
+{% block subtitulo_pagina %}{{ subtitulo }}{% endblock %}
+{% block contenido %}
+<ol class="pasos">
+  <li class="paso{% if paso == 1 %} paso-activo{% endif %}"><span class="paso-numero">1</span>Indicador y periodo</li>
+  <li class="paso{% if paso == 2 %} paso-activo{% endif %}"><span class="paso-numero">2</span>Valor y evidencia</li>
+  <li class="paso{% if paso == 3 %} paso-activo{% endif %}"><span class="paso-numero">3</span>Confirmación y guardado</li>
+</ol>
+
+<div class="rejilla">
+  <section class="tarjeta rejilla-principal">
+    {% if paso == 1 %}
+    <div class="tarjeta-cabecera">
+      <div>
+        <h2 class="tarjeta-titulo">Captura de medición</h2>
+        <p class="tarjeta-sub">RF-03 · Registro verificable con evidencia documental</p>
+      </div>
+      <span class="chip">ISO 9.1.1</span>
+    </div>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="paso" value="1">
+      {% if form_periodo.non_field_errors %}
+      <ul class="errores">
+        {% for error in form_periodo.non_field_errors %}
+        <li class="error">{{ error }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <div class="campo">
+        <label for="{{ form_periodo.indicador.id_for_label }}">{{ form_periodo.indicador.label }}</label>
+        {{ form_periodo.indicador }}
+        {% for error in form_periodo.indicador.errors %}
+        <p class="error">{{ error }}</p>
+        {% endfor %}
+        <p class="ayuda">{{ form_periodo.indicador.help_text }}</p>
+      </div>
+      <div class="campo-pareja">
+        <div class="campo">
+          <label for="{{ form_periodo.anio.id_for_label }}">{{ form_periodo.anio.label }}</label>
+          {{ form_periodo.anio }}
+          {% for error in form_periodo.anio.errors %}
+          <p class="error">{{ error }}</p>
+          {% endfor %}
+          <p class="ayuda">{{ form_periodo.anio.help_text }}</p>
+        </div>
+        <div class="campo">
+          <label for="{{ form_periodo.mes.id_for_label }}">{{ form_periodo.mes.label }}</label>
+          {{ form_periodo.mes }}
+          {% for error in form_periodo.mes.errors %}
+          <p class="error">{{ error }}</p>
+          {% endfor %}
+          <p class="ayuda">{{ form_periodo.mes.help_text }}</p>
+        </div>
+      </div>
+      <div class="acciones">
+        <button type="submit" class="boton boton-primario">Siguiente</button>
+        <a href="{% url 'core:inicio' %}" class="boton">Cancelar</a>
+      </div>
+    </form>
+    {% elif paso == 2 %}
+    <div class="tarjeta-cabecera">
+      <div>
+        <h2 class="tarjeta-titulo">Valor y evidencia</h2>
+        <p class="tarjeta-sub">{{ datos.indicador.codigo }} · {{ datos.indicador.nombre }} · {{ mes_nombre }} {{ datos.anio }}</p>
+      </div>
+      <span class="chip">ISO 9.1.1</span>
+    </div>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="paso" value="2">
+      <input type="hidden" name="indicador" value="{{ datos.indicador.pk }}">
+      <input type="hidden" name="anio" value="{{ datos.anio }}">
+      <input type="hidden" name="mes" value="{{ datos.mes }}">
+      {% if form_valor.non_field_errors %}
+      <ul class="errores">
+        {% for error in form_valor.non_field_errors %}
+        <li class="error">{{ error }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <div class="campo">
+        <label for="{{ form_valor.valor_medido.id_for_label }}">{{ form_valor.valor_medido.label }}</label>
+        {{ form_valor.valor_medido }}
+        {% for error in form_valor.valor_medido.errors %}
+        <p class="error">{{ error }}</p>
+        {% endfor %}
+        <p class="ayuda">{{ form_valor.valor_medido.help_text }}</p>
+      </div>
+      <div class="campo">
+        <label for="{{ form_valor.evidencia.id_for_label }}">{{ form_valor.evidencia.label }}</label>
+        {{ form_valor.evidencia }}
+        {% for error in form_valor.evidencia.errors %}
+        <p class="error">{{ error }}</p>
+        {% endfor %}
+        <p class="ayuda">{{ form_valor.evidencia.help_text }}</p>
+      </div>
+      <div class="acciones">
+        <button type="submit" class="boton boton-primario">Siguiente</button>
+        <button type="submit" name="volver" value="1" class="boton">Atrás</button>
+      </div>
+    </form>
+    {% else %}
+    <div class="tarjeta-cabecera">
+      <div>
+        <h2 class="tarjeta-titulo">Confirmación y guardado</h2>
+        <p class="tarjeta-sub">Revisa el cálculo antes de persistir la medición.</p>
+      </div>
+      <span class="chip">ISO 9.1.1</span>
+    </div>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="paso" value="3">
+      <input type="hidden" name="indicador" value="{{ datos.indicador.pk }}">
+      <input type="hidden" name="anio" value="{{ datos.anio }}">
+      <input type="hidden" name="mes" value="{{ datos.mes }}">
+      <input type="hidden" name="valor_medido" value="{{ valor_ingresado }}">
+      <input type="hidden" name="evidencia" value="{{ evidencia_ingresada }}">
+      {% if form_valor.non_field_errors %}
+      <ul class="errores">
+        {% for error in form_valor.non_field_errors %}
+        <li class="error">{{ error }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <dl class="ficha">
+        <dt>Indicador</dt>
+        <dd>{{ datos.indicador.codigo }} · {{ datos.indicador.nombre }} ({{ datos.indicador.unidad_medida }})</dd>
+        <dt>Periodo</dt>
+        <dd>{{ mes_nombre }} {{ datos.anio }}</dd>
+        <dt>Valor medido</dt>
+        <dd class="codigo">{{ valor_ingresado }} {{ datos.indicador.unidad_medida }}</dd>
+        <dt>Evidencia</dt>
+        <dd>{{ evidencia_ingresada }}</dd>
+        {% if previsualizacion %}
+        <dt>Valor de la meta</dt>
+        <dd class="codigo">{{ previsualizacion.valor_meta }} {{ datos.indicador.unidad_medida }}</dd>
+        <dt>Desvío</dt>
+        <dd class="codigo">{{ previsualizacion.desvio }} %</dd>
+        <dt>Estado previsto</dt>
+        <dd><span class="pastilla pastilla-{{ previsualizacion.estado|lower }}">{{ previsualizacion.estado_display }}</span></dd>
+        {% endif %}
+      </dl>
+      <p class="ayuda">La medición quedará asociada a tu usuario. Si el estado es Alerta se creará automáticamente una no conformidad (RF-05).</p>
+      <div class="acciones">
+        <button type="submit" class="boton boton-primario">Guardar medición</button>
+        <button type="submit" name="volver" value="2" class="boton">Atrás</button>
+      </div>
+    </form>
+    {% endif %}
+  </section>
+
+  <aside class="lateral">
+    <section class="tarjeta tarjeta-compacta">
+      <div class="cabecera-seccion">
+        <h2>Reglas de evaluación</h2>
+        <span class="chip">RF-04</span>
+      </div>
+      <ul class="reglas">
+        <li>
+          <span class="punto punto-ok" aria-hidden="true"></span>
+          <div><strong>Normal</strong><p>Valor hasta el umbral de advertencia{% if reglas %} ({{ reglas.umbral }}){% endif %}.</p></div>
+        </li>
+        <li>
+          <span class="punto punto-warn" aria-hidden="true"></span>
+          <div><strong>Advertencia</strong><p>Por encima del umbral y hasta la meta{% if reglas %} ({{ reglas.limite }}){% endif %}.</p></div>
+        </li>
+        <li>
+          <span class="punto punto-alert" aria-hidden="true"></span>
+          <div><strong>Alerta</strong><p>Por encima de la meta mensual. Se crea una no conformidad automática.</p></div>
+        </li>
+      </ul>
+    </section>
+
+    {% if meta %}
+    <section class="tarjeta tarjeta-compacta">
+      <div class="cabecera-seccion">
+        <h2>Meta vigente</h2>
+        <span class="pastilla pastilla-ok">Parametrizada</span>
+      </div>
+      <dl class="ficha">
+        <dt>Indicador</dt>
+        <dd>{{ meta.indicador.codigo }}</dd>
+        <dt>Año</dt>
+        <dd>{{ meta.anio_vigencia }}</dd>
+        <dt>Límite mensual</dt>
+        <dd class="codigo">{{ meta.valor_limite }} {{ meta.indicador.unidad_medida }}</dd>
+        <dt>Umbral</dt>
+        <dd class="codigo">{{ meta.umbral_advertencia_pct }} %</dd>
+        <dt>Valor de activación</dt>
+        <dd class="codigo">{{ meta.valor_activacion }} {{ meta.indicador.unidad_medida }}</dd>
+      </dl>
+    </section>
+    {% endif %}
+
+    <section class="tarjeta tarjeta-compacta">
+      <div class="cabecera-seccion">
+        <h2>Tus registros</h2>
+        <span class="contador">{{ mis_mediciones|length }}</span>
+      </div>
+      {% if mis_mediciones %}
+      <ul class="lista-registros">
+        {% for medicion in mis_mediciones %}
+        <li>
+          <span class="codigo">{{ medicion.indicador.codigo }}</span> · {{ medicion.nombre_mes }} {{ medicion.anio }}
+          <span class="pastilla pastilla-{{ medicion.estado_semaforo|lower }}">{{ medicion.get_estado_semaforo_display }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="estado-vacio">Sin mediciones registradas por ti todavía.</p>
+      {% endif %}
+    </section>
+  </aside>
+</div>
+
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Bitácora de auditoría de mediciones</h2>
+      <p class="tarjeta-sub">Historial inmutable de modificaciones sobre mediciones ya registradas</p>
+    </div>
+    <span class="chip">RF-07 · ISO 7.5.3</span>
+  </div>
+  {% if bitacora %}
+  <div class="tabla-contenedor bitacora-contenedor">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th scope="col">Indicador / periodo</th>
+          <th scope="col">Valor anterior</th>
+          <th scope="col">Valor nuevo</th>
+          <th scope="col">Usuario responsable</th>
+          <th scope="col">Fecha y hora</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for registro in bitacora %}
+        <tr>
+          <td><span class="codigo">{{ registro.medicion.indicador.codigo }}</span> · {{ registro.medicion.nombre_mes }} {{ registro.medicion.anio }}</td>
+          <td class="codigo">{{ registro.valor_anterior }}</td>
+          <td class="codigo">{{ registro.valor_nuevo }}</td>
+          <td>{{ registro.usuario.username }} <span class="muted">({{ registro.usuario.get_rol_display }})</span></td>
+          <td class="codigo">{{ registro.fecha_modificacion|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="estado-vacio">Sin modificaciones registradas en la bitácora de auditoría.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -8,6 +8,7 @@ from .models import Usuario
 ACCIONES = {
     "ver_dashboard": (Usuario.Rol.OPERADOR, Usuario.Rol.RESPONSABLE_SGA),
     "registrar_medicion": (Usuario.Rol.OPERADOR, Usuario.Rol.RESPONSABLE_SGA),
+    "editar_medicion": (Usuario.Rol.OPERADOR, Usuario.Rol.RESPONSABLE_SGA),
     "modificar_procesos": (Usuario.Rol.RESPONSABLE_SGA,),
     "modificar_aspectos": (Usuario.Rol.RESPONSABLE_SGA,),
     "modificar_indicadores": (Usuario.Rol.RESPONSABLE_SGA,),

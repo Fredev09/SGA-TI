@@ -17,9 +17,11 @@ class MatrizPruebas(TestCase):
             username="mat-res", password=self.clave, rol=Usuario.Rol.RESPONSABLE_SGA
         )
 
-    def test_operador_solo_tiene_dashboard_y_registro(self):
+    def test_operador_tiene_dashboard_registro_y_edicion(self):
         permitidas = [accion for accion in ACCIONES if puede(self.operador, accion)]
-        self.assertEqual(sorted(permitidas), ["registrar_medicion", "ver_dashboard"])
+        self.assertEqual(
+            sorted(permitidas), ["editar_medicion", "registrar_medicion", "ver_dashboard"]
+        )
 
     def test_responsable_tiene_todas_las_acciones(self):
         for accion in ACCIONES:

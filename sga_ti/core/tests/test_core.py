@@ -25,13 +25,16 @@ class PlantillaBasePruebas(TestCase):
         respuesta = self.client.get(reverse("core:inicio"))
         self.assertContains(respuesta, "Operador")
         self.assertContains(respuesta, reverse("cuentas:salida"))
-        self.assertContains(respuesta, "El tablero de control se habilita en la fase F2")
+        self.assertContains(respuesta, "Dashboard")
+        self.assertContains(respuesta, "Mediciones del periodo")
 
     def test_inicio_sin_datos_no_simula_contenido(self):
         self.client.login(username="base-ope", password=self.clave)
         respuesta = self.client.get(reverse("core:inicio"))
-        self.assertNotContains(respuesta, "IRNC")
-        self.assertNotContains(respuesta, "No conformidades activas")
+        self.assertContains(respuesta, "Sin mediciones registradas para este periodo")
+        self.assertContains(respuesta, "Sin no conformidades activas en el periodo")
+        self.assertNotContains(respuesta, "IND-")
+        self.assertNotContains(respuesta, "NC-")
 
 
 class PaginasDeErrorPruebas(TestCase):

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block titulo %}Editar medición{% endblock %}
+{% block titulo_pagina %}Editar medición{% endblock %}
+{% block subtitulo_pagina %}RF-03 · Recálculo sincrónico y registro en bitácora (RF-07).{% endblock %}
+{% block contenido %}
+<section class="tarjeta tarjeta-formulario">
+  <div class="alerta" role="status">
+    <span class="alerta-marca" aria-hidden="true"></span>
+    <div class="alerta-cuerpo">
+      <strong>Modo edición de medición existente</strong>
+      <p>
+        {{ medicion.indicador.codigo }} · {{ medicion.nombre_mes }} {{ medicion.anio }} · valor actual
+        {{ medicion.valor_medido }} {{ medicion.indicador.unidad_medida }} · estado
+        {{ medicion.get_estado_semaforo_display }}. El guardado quedará asentado en la bitácora de auditoría.
+      </p>
+    </div>
+  </div>
+
+  <dl class="ficha">
+    <dt>Indicador</dt>
+    <dd>{{ medicion.indicador.nombre }} ({{ medicion.indicador.unidad_medida }})</dd>
+    {% if meta %}
+    <dt>Meta vigente</dt>
+    <dd class="codigo">{{ meta.valor_limite }} {{ medicion.indicador.unidad_medida }}</dd>
+    <dt>Valor de activación</dt>
+    <dd class="codigo">{{ meta.valor_activacion }} {{ medicion.indicador.unidad_medida }}</dd>
+    {% endif %}
+    <dt>Desvío registrado</dt>
+    <dd class="codigo">{{ medicion.desvio_pct }} %</dd>
+    <dt>Evidencia actual</dt>
+    <dd>{{ medicion.evidencia }}</dd>
+    <dt>Registrada por</dt>
+    <dd>{{ medicion.usuario.username }} · {{ medicion.fecha_registro|date:"d/m/Y H:i" }}</dd>
+  </dl>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <ul class="errores">
+      {% for error in form.non_field_errors %}
+      <li class="error">{{ error }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <div class="campo">
+      <label for="{{ form.valor_medido.id_for_label }}">{{ form.valor_medido.label }}</label>
+      {{ form.valor_medido }}
+      {% for error in form.valor_medido.errors %}
+      <p class="error">{{ error }}</p>
+      {% endfor %}
+      <p class="ayuda">{{ form.valor_medido.help_text }}</p>
+    </div>
+    <div class="campo">
+      <label for="{{ form.evidencia.id_for_label }}">{{ form.evidencia.label }}</label>
+      {{ form.evidencia }}
+      {% for error in form.evidencia.errors %}
+      <p class="error">{{ error }}</p>
+      {% endfor %}
+      <p class="ayuda">{{ form.evidencia.help_text }}</p>
+    </div>
+    <div class="acciones">
+      <button type="submit" class="boton boton-primario">Guardar cambios</button>
+      <a href="{% url 'core:inicio' %}" class="boton">Cancelar</a>
+    </div>
+  </form>
+
+  <div class="seccion">
+    <div class="cabecera-seccion">
+      <h2>Historial de la medición <span class="contador">Registros: {{ historial|length }}</span></h2>
+      <span class="chip">RF-07 · ISO 7.5.3</span>
+    </div>
+    {% if historial %}
+    <div class="tabla-contenedor">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th scope="col">Valor anterior</th>
+            <th scope="col">Valor nuevo</th>
+            <th scope="col">Usuario responsable</th>
+            <th scope="col">Fecha y hora</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for registro in historial %}
+          <tr>
+            <td class="codigo">{{ registro.valor_anterior }}</td>
+            <td class="codigo">{{ registro.valor_nuevo }}</td>
+            <td>{{ registro.usuario.username }} <span class="muted">({{ registro.usuario.get_rol_display }})</span></td>
+            <td class="codigo">{{ registro.fecha_modificacion|date:"d/m/Y H:i" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="estado-vacio">Sin modificaciones registradas para esta medición.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
