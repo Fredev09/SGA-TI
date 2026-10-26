@@ -15,3 +15,5 @@ class FormularioEntrada(AuthenticationForm):
         self.fields["password"].error_messages["required"] = "Ingrese su contraseña."
         self.fields["username"].widget.attrs["autocomplete"] = "username"
         self.fields["password"].widget.attrs["autocomplete"] = "current-password"
+        self.fields["username"].widget.attrs["placeholder"] = "Usuario"
+        self.fields["password"].widget.attrs["placeholder"] = "Contraseña de acceso"

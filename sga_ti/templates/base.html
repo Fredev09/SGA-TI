@@ -10,41 +10,97 @@
   {% block css %}{% endblock %}
 </head>
 <body>
-  <header class="cabecera">
-    <div class="marca">
-      <span class="marca-nombre">SGA-TI</span>
-      <span class="marca-sub">CloudTech Solutions S.A.S. · ISO 14001:2015</span>
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="icono-panel" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+      <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+      <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+      <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+    </symbol>
+    <symbol id="icono-registro" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9"></circle>
+      <path d="M12 8v8M8 12h8"></path>
+    </symbol>
+    <symbol id="icono-aspectos" viewBox="0 0 24 24">
+      <path d="M12 3 3 7.5 12 12l9-4.5L12 3Z"></path>
+      <path d="M3 12.5 12 17l9-4.5"></path>
+      <path d="m3 17 9 4.5L21 17"></path>
+    </symbol>
+    <symbol id="icono-metas" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9"></circle>
+      <circle cx="12" cy="12" r="5"></circle>
+      <circle cx="12" cy="12" r="1.4"></circle>
+    </symbol>
+  </svg>
+  {% if user.is_authenticated %}
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-top">
+          <span class="brand-badge">SGA</span>
+          <span class="brand-title">SGA-TI</span>
+        </div>
+        <p class="brand-sub">Control Operacional · ISO 14001:2015</p>
+        <p class="brand-org">CloudTech Solutions S.A.S.</p>
+      </div>
+      <nav class="nav" aria-label="Navegación principal">
+        <p class="nav-group">Sección principal</p>
+        <a class="nav-item{% if request.resolver_match.url_name == 'inicio' %} active{% endif %}" href="{% url 'core:inicio' %}">
+          <svg class="nav-icono" aria-hidden="true"><use href="#icono-panel"></use></svg>Dashboard
+        </a>
+        {% url 'operacion:medicion_nueva' as url_mediciones %}
+        {% if url_mediciones and user|tiene_permiso:"registrar_medicion" %}
+        <a class="nav-item{% if request.resolver_match.url_name == 'medicion_nueva' or request.resolver_match.url_name == 'medicion_editar' %} active{% endif %}" href="{{ url_mediciones }}">
+          <svg class="nav-icono" aria-hidden="true"><use href="#icono-registro"></use></svg>Registrar medición
+        </a>
+        {% endif %}
+        <p class="nav-group">Grupo configuración SGA</p>
+        {% if user|tiene_permiso:"modificar_aspectos" %}
+        <a class="nav-item{% if request.resolver_match.url_name == 'catalogo' or request.resolver_match.url_name == 'proceso_nuevo' or request.resolver_match.url_name == 'aspecto_nuevo' %} active{% endif %}" href="{% url 'ambiental:catalogo' %}">
+          <svg class="nav-icono" aria-hidden="true"><use href="#icono-aspectos"></use></svg>Aspectos ambientales
+        </a>
+        {% endif %}
+        {% if user|tiene_permiso:"modificar_indicadores" %}
+        <a class="nav-item{% if request.resolver_match.url_name == 'parametrizacion' or request.resolver_match.url_name == 'indicador_nuevo' or request.resolver_match.url_name == 'meta_nueva' %} active{% endif %}" href="{% url 'ambiental:parametrizacion' %}">
+          <svg class="nav-icono" aria-hidden="true"><use href="#icono-metas"></use></svg>Metas e indicadores
+        </a>
+        {% endif %}
+      </nav>
+      <div class="user">
+        <p class="user-line">{{ user.get_full_name|default:user.username }} · {{ user.get_rol_display }}</p>
+        <p class="user-role">Sesión activa · {{ user.rol }} · ISO 14001:2015</p>
+        <div class="user-actions">
+          <form method="post" action="{% url 'cuentas:salida' %}">
+            {% csrf_token %}
+            <button type="submit" class="boton">Cerrar sesión</button>
+          </form>
+        </div>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="topbar">
+        <div class="topbar-texto">
+          <h1 class="page-title">{% block titulo_pagina %}{% endblock %}</h1>
+          <p class="page-sub">{% block subtitulo_pagina %}{% endblock %}</p>
+        </div>
+        <span class="chip">ISO 14001:2015</span>
+      </header>
+      <main class="views">
+{% else %}
+  <div class="acceso">
+      <main class="views views-acceso">
+{% endif %}
+        {% if messages %}
+        <ul class="mensajes">
+          {% for mensaje in messages %}
+          <li class="mensaje mensaje-{{ mensaje.tags }}">{{ mensaje }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% block contenido %}{% endblock %}
+      </main>
     </div>
-    {% if user.is_authenticated %}
-    <nav class="principal" aria-label="Navegación principal">
-      <a href="{% url 'core:inicio' %}" class="enlace-nav{% if request.resolver_match.url_name == 'inicio' %} enlace-activo{% endif %}">Inicio</a>
-      {% if user|tiene_permiso:"modificar_aspectos" %}
-      <a href="{% url 'ambiental:catalogo' %}" class="enlace-nav{% if request.resolver_match.url_name == 'catalogo' or request.resolver_match.url_name == 'proceso_nuevo' or request.resolver_match.url_name == 'aspecto_nuevo' %} enlace-activo{% endif %}">Catálogo ambiental</a>
-      {% endif %}
-      {% if user|tiene_permiso:"modificar_indicadores" %}
-      <a href="{% url 'ambiental:parametrizacion' %}" class="enlace-nav{% if request.resolver_match.url_name == 'parametrizacion' or request.resolver_match.url_name == 'indicador_nuevo' or request.resolver_match.url_name == 'meta_nueva' %} enlace-activo{% endif %}">Parámetros e indicadores</a>
-      {% endif %}
-    </nav>
-    <div class="sesion">
-      <span class="sesion-usuario">{{ user.get_full_name|default:user.username }}</span>
-      <span class="sesion-rol">{{ user.get_rol_display }}</span>
-      <form method="post" action="{% url 'cuentas:salida' %}">
-        {% csrf_token %}
-        <button type="submit" class="boton">Cerrar sesión</button>
-      </form>
-    </div>
+    {% if user.is_authenticated %}</div>
     {% endif %}
-  </header>
-  {% if messages %}
-  <ul class="mensajes">
-    {% for mensaje in messages %}
-    <li class="mensaje mensaje-{{ mensaje.tags }}">{{ mensaje }}</li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-  <main class="contenido">
-    {% block contenido %}{% endblock %}
-  </main>
-  <footer class="pie">Proyecto académico de gestión ambiental · Datos de demostración</footer>
 </body>
 </html>

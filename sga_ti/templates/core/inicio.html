@@ -1,9 +1,192 @@
 {% extends "base.html" %}
 {% load etiquetas %}
 {% block titulo %}Dashboard{% endblock %}
+{% block titulo_pagina %}Dashboard{% endblock %}
+{% block subtitulo_pagina %}RF-04 · Resumen de indicadores y estado de no conformidades{% endblock %}
 {% block contenido %}
-<section class="panel">
-  <h1>Dashboard</h1>
-  <p class="estado-vacio">El tablero de control se habilita en la fase F2 con las mediciones registradas{% if user|tiene_permiso:"modificar_aspectos" %}. Ya puedes revisar el <a href="{% url 'ambiental:catalogo' %}">catálogo ambiental</a> de procesos, aspectos e impactos.{% endif %}</p>
+<div class="barra">
+  <form method="get" class="filtros">
+    <label for="filtro-anio">Año</label>
+    <input type="number" id="filtro-anio" name="anio" value="{{ anio }}" min="1000" max="9999">
+    <label for="filtro-mes">Corte</label>
+    <select id="filtro-mes" name="mes">
+      <option value="">Todo el año</option>
+      {% for numero, nombre in MESES %}
+      <option value="{{ numero }}" {% if mes == numero %}selected{% endif %}>{{ nombre }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="boton">Aplicar</button>
+  </form>
+  {% if user|tiene_permiso:"registrar_medicion" %}
+  <a href="{% url 'operacion:medicion_nueva' %}" class="boton boton-primario">Registrar medición</a>
+  {% endif %}
+</div>
+
+<section class="banda">
+  <div class="banda-cuerpo">
+    <p class="banda-titulo">{% if mes %}{{ mes_nombre }} {{ anio }}{% else %}Enero – Diciembre {{ anio }}{% endif %}</p>
+    <p class="banda-estados">
+      <span class="dato-alerta">{{ conteo.ALERTA }} alerta{{ conteo.ALERTA|pluralize }}</span>
+      <span class="dato-advertencia">{{ conteo.ADVERTENCIA }} advertencia{{ conteo.ADVERTENCIA|pluralize }}</span>
+      <span class="dato-normal">{{ conteo.NORMAL }} normal{{ conteo.NORMAL|pluralize:",es" }}</span>
+    </p>
+    <p class="banda-nota">Mediciones del periodo: {{ mediciones|length }}</p>
+  </div>
+  <div class="banda-kpi">
+    <span class="kpi-etiqueta">IRNC</span>
+    <span class="kpi-valor">{{ resumen_nc.irnc }}<span class="kpi-unidad">%</span></span>
+    <span class="kpi-nota">meta anual 100 %</span>
+  </div>
 </section>
+
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Mediciones del periodo</h2>
+      <p class="tarjeta-sub">
+        {% if mes %}Corte {{ mes_nombre }} {{ anio }}{% else %}Periodo anual {{ anio }}{% endif %} frente a la meta mensual
+      </p>
+    </div>
+    <span class="chip">ISO 9.1.1 / 6.2</span>
+  </div>
+  {% if mediciones %}
+  <div class="tabla-contenedor">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th scope="col">Indicador</th>
+          <th scope="col">Valor actual</th>
+          <th scope="col">Meta mensual</th>
+          <th scope="col">Desvío</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Detalle</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for medicion in mediciones %}
+        <tr>
+          <td>
+            <strong>{{ medicion.indicador.nombre }}</strong><br>
+            <span class="codigo">{{ medicion.indicador.codigo }}</span> · {{ medicion.indicador.unidad_medida }}<br>
+            <span class="muted">{{ medicion.nombre_mes }} {{ medicion.anio }}</span>
+          </td>
+          <td class="codigo">{{ medicion.valor_medido }}</td>
+          <td class="codigo">{{ medicion.valor_meta }}</td>
+          <td class="codigo">{{ medicion.desvio_pct }} %</td>
+          <td><span class="pastilla pastilla-{{ medicion.estado_semaforo|lower }}">{{ medicion.get_estado_semaforo_display }}</span></td>
+          <td>
+            {% if user|tiene_permiso:"editar_medicion" %}
+            <a class="enlace-accion" href="{% url 'operacion:medicion_editar' medicion.pk %}">Editar</a>
+            {% else %}
+            <span class="muted">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="estado-vacio">
+    Sin mediciones registradas para este periodo.
+    {% if user|tiene_permiso:"registrar_medicion" %}
+    <a href="{% url 'operacion:medicion_nueva' %}">Registrar la primera medición</a>.
+    {% endif %}
+  </p>
+  {% endif %}
+</section>
+
+<div class="rejilla">
+  <section class="tarjeta">
+    <div class="tarjeta-cabecera">
+      <div>
+        <h2 class="tarjeta-titulo">Tendencia histórica</h2>
+        {% if tendencia %}
+        <p class="tarjeta-sub">{{ indicador_seleccionado.nombre }} · {{ indicador_seleccionado.codigo }} · {{ indicador_seleccionado.unidad_medida }}</p>
+        {% else %}
+        <p class="tarjeta-sub">Serie mensual de los indicadores con mediciones registradas</p>
+        {% endif %}
+      </div>
+      <span class="chip">Serie {{ anio }}</span>
+    </div>
+    {% if indicadores %}
+    <div class="filtros">
+      {% for indicador in indicadores %}
+      <a class="boton{% if indicador.pk == indicador_seleccionado.pk %} boton-activo{% endif %}"
+         href="?anio={{ anio }}{% if mes %}&amp;mes={{ mes }}{% endif %}&amp;indicador={{ indicador.pk }}">{{ indicador.codigo }}</a>
+      {% endfor %}
+    </div>
+    {% if tendencia %}
+    <svg class="grafico" viewBox="0 0 680 260" role="img"
+         aria-label="Tendencia mensual de {{ indicador_seleccionado.nombre }} en {{ anio }}">
+      {% for linea in tendencia.rejilla %}
+      <line class="grafico-rejilla" x1="{{ tendencia.margen_izquierdo }}" y1="{{ linea.y }}" x2="{{ tendencia.ancho }}" y2="{{ linea.y }}"></line>
+      <text class="grafico-eje" x="50" y="{{ linea.etiqueta_y }}" text-anchor="end">{{ linea.etiqueta }}</text>
+      {% endfor %}
+      {% if tendencia.umbral_y %}
+      <line class="grafico-umbral" x1="{{ tendencia.margen_izquierdo }}" y1="{{ tendencia.umbral_y }}" x2="{{ tendencia.ancho }}" y2="{{ tendencia.umbral_y }}"></line>
+      <line class="grafico-meta" x1="{{ tendencia.margen_izquierdo }}" y1="{{ tendencia.meta_y }}" x2="{{ tendencia.ancho }}" y2="{{ tendencia.meta_y }}"></line>
+      {% endif %}
+      <polyline class="grafico-linea" points="{{ tendencia.polilinea }}"></polyline>
+      {% for punto in tendencia.puntos %}
+      <circle class="grafico-punto grafico-punto-{{ punto.estado|lower }}" cx="{{ punto.x }}" cy="{{ punto.y }}" r="4.5">
+        <title>{{ punto.nombre_mes }}: {{ punto.valor }} {{ indicador_seleccionado.unidad_medida }} · {{ punto.estado_display }}</title>
+      </circle>
+      {% endfor %}
+      {% for etiqueta in tendencia.eje_x %}
+      <text class="grafico-eje" x="{{ etiqueta.x }}" y="248" text-anchor="middle">{{ etiqueta.etiqueta }}</text>
+      {% endfor %}
+    </svg>
+    <ul class="leyenda">
+      <li><span class="marca-linea marca-serie"></span> Serie mensual</li>
+      {% if tendencia.meta %}
+      <li><span class="marca-linea marca-meta"></span> Meta {{ tendencia.meta }}</li>
+      <li><span class="marca-linea marca-umbral"></span> Advertencia {{ tendencia.umbral }}</li>
+      {% endif %}
+    </ul>
+    {% else %}
+    <p class="estado-vacio">Sin mediciones para graficar en este indicador.</p>
+    {% endif %}
+    {% else %}
+    <p class="estado-vacio">Aún no hay indicadores con mediciones registradas.</p>
+    {% endif %}
+  </section>
+
+  <section class="tarjeta">
+    <div class="tarjeta-cabecera">
+      <div>
+        <h2 class="tarjeta-titulo">No conformidades activas</h2>
+        <p class="tarjeta-sub">Seguimiento de hallazgos y acciones</p>
+      </div>
+      <span class="chip">ISO 10.1 / 10.2</span>
+    </div>
+    <p class="texto-suave">
+      {{ resumen_nc.total }} registrada{{ resumen_nc.total|pluralize }} ·
+      {{ resumen_nc.cerradas }} cerrada{{ resumen_nc.cerradas|pluralize }} ·
+      {{ resumen_nc.activas }} activa{{ resumen_nc.activas|pluralize }}
+    </p>
+    {% if nc_activas %}
+    <ul class="lista-nc">
+      {% for no_conformidad in nc_activas %}
+      <li class="ficha-nc">
+        <div class="ficha-nc-cabecera">
+          <span class="codigo">{{ no_conformidad.codigo }}</span>
+          <span class="pastilla pastilla-alerta">{{ no_conformidad.get_estado_display }}</span>
+        </div>
+        <p>{{ no_conformidad.descripcion }}</p>
+        <p class="muted">
+          Origen {{ no_conformidad.get_origen_display }} · {{ no_conformidad.fecha_deteccion|date:"d/m/Y" }} ·
+          Severidad {{ no_conformidad.get_severidad_display }}
+        </p>
+        {% if no_conformidad.requiere_revision %}
+        <p class="alerta-texto">Requiere revisión manual del RESPONSABLE_SGA</p>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="estado-vacio">Sin no conformidades activas en el periodo.</p>
+    {% endif %}
+  </section>
+</div>
 {% endblock %}

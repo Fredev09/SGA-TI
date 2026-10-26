@@ -75,11 +75,11 @@ class PermisosCatalogoPruebas(TestCase):
 
     def test_navegacion_oculta_enlace_para_operador(self):
         respuesta = self.cliente_operador.get(reverse("core:inicio"))
-        self.assertNotContains(respuesta, "Catálogo ambiental")
+        self.assertNotContains(respuesta, "Aspectos ambientales")
 
     def test_navegacion_muestra_enlace_para_responsable(self):
         respuesta = self.cliente_responsable.get(reverse("core:inicio"))
-        self.assertContains(respuesta, "Catálogo ambiental")
+        self.assertContains(respuesta, "Aspectos ambientales")
 
     def test_post_directo_aspecto_valido_como_responsable(self):
         respuesta = self.cliente_responsable.post(
@@ -178,8 +178,8 @@ class PermisosParametrizacionPruebas(TestCase):
 
     def test_navegacion_oculta_para_operador(self):
         respuesta = self.operador.get(reverse("core:inicio"))
-        self.assertNotContains(respuesta, "Parámetros e indicadores")
+        self.assertNotContains(respuesta, "Metas e indicadores")
 
     def test_navegacion_muestra_para_responsable(self):
         respuesta = self.responsable.get(reverse("core:inicio"))
-        self.assertContains(respuesta, "Parámetros e indicadores")
+        self.assertContains(respuesta, "Metas e indicadores")

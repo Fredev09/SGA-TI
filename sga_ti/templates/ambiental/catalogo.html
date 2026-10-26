@@ -1,33 +1,32 @@
 {% extends "base.html" %}
-{% block titulo %}Catálogo ambiental{% endblock %}
+{% load etiquetas %}
+{% block titulo %}Aspectos ambientales{% endblock %}
+{% block titulo_pagina %}Aspectos ambientales{% endblock %}
+{% block subtitulo_pagina %}RF-01 · ISO 6.1.2 · Matriz de aspectos e impactos{% endblock %}
 {% block contenido %}
-<section class="panel">
-  <div class="panel-cabecera">
-    <div>
-      <h1>Matriz de aspectos e impactos</h1>
-      <p class="panel-sub">RF-01 · Cláusula 6.1.2 · Identificación y evaluación de significancia</p>
-    </div>
-    <div class="acciones">
-      <a href="{% url 'ambiental:proceso_nuevo' %}" class="boton">Nuevo proceso</a>
-      <a href="{% url 'ambiental:aspecto_nuevo' %}" class="boton boton-primario">Nuevo aspecto ambiental</a>
-    </div>
-  </div>
-
-  {% if aspectos_sin_indicador %}
-  <div class="alerta" role="alert">
-    <span class="alerta-marca" aria-hidden="true"></span>
-    <div class="alerta-cuerpo">
-      <strong>Aspecto significativo sin indicador</strong>
-      <p>{{ aspectos_sin_indicador|length }} aspecto{{ aspectos_sin_indicador|pluralize }} significativo{{ aspectos_sin_indicador|pluralize }} aún no tiene indicador asociado. La alerta es preventiva y no bloquea el registro.</p>
-      <ul class="alerta-lista">
-        {% for aspecto in aspectos_sin_indicador %}
-        <li><span class="codigo">{{ aspecto.codigo }}</span> · {{ aspecto.nombre }} <span class="muted">({{ aspecto.proceso.nombre }})</span></li>
-        {% endfor %}
-      </ul>
-    </div>
-  </div>
+<div class="tabs">
+  <a class="tab tab-activo" href="{% url 'ambiental:catalogo' %}" aria-current="page">Aspectos ambientales</a>
+  {% if user|tiene_permiso:"modificar_indicadores" %}
+  <a class="tab" href="{% url 'ambiental:parametrizacion' %}">Metas e indicadores</a>
   {% endif %}
+</div>
 
+{% if aspectos_sin_indicador %}
+<div class="alerta" role="alert">
+  <span class="alerta-marca" aria-hidden="true"></span>
+  <div class="alerta-cuerpo">
+    <strong>Aspecto significativo sin indicador</strong>
+    <p>{{ aspectos_sin_indicador|length }} aspecto{{ aspectos_sin_indicador|pluralize }} significativo{{ aspectos_sin_indicador|pluralize }} aún no tiene indicador asociado. La alerta es preventiva y no bloquea el registro.</p>
+    <ul class="alerta-lista">
+      {% for aspecto in aspectos_sin_indicador %}
+      <li><span class="codigo">{{ aspecto.codigo }}</span> · {{ aspecto.nombre }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endif %}
+
+<div class="barra">
   <form method="get" class="filtros">
     <label for="filtro-significancia">Filtro de significancia</label>
     <select id="filtro-significancia" name="significancia">
@@ -37,97 +36,109 @@
     </select>
     <button type="submit" class="boton">Filtrar</button>
   </form>
-
-  <div class="seccion">
-    <div class="cabecera-seccion">
-      <h2>Procesos <span class="contador">Registros: {{ procesos|length }}</span></h2>
-    </div>
-    {% if procesos %}
-    <div class="tabla-contenedor">
-      <table class="tabla">
-        <thead>
-          <tr>
-            <th scope="col">Código</th>
-            <th scope="col">Proceso</th>
-            <th scope="col">Responsable</th>
-            <th scope="col">Aspectos (significativos)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for proceso in procesos %}
-          <tr>
-            <td class="codigo">{{ proceso.codigo }}</td>
-            <td>{{ proceso.nombre }}</td>
-            <td>{{ proceso.responsable }}</td>
-            <td>
-              {% if proceso.total_aspectos %}
-              {{ proceso.total_aspectos }} · {{ proceso.total_significativos }} significativo{{ proceso.total_significativos|pluralize }}
-              {% else %}
-              <span class="muted">Sin aspectos</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <p class="estado-vacio">Aún no hay procesos registrados. Crea el primero para empezar el catálogo.</p>
-    {% endif %}
+  <div class="acciones">
+    <a href="{% url 'ambiental:proceso_nuevo' %}" class="boton">Nuevo proceso</a>
+    <a href="{% url 'ambiental:aspecto_nuevo' %}" class="boton boton-primario">Nuevo aspecto ambiental</a>
   </div>
+</div>
 
-  <div class="seccion">
-    <div class="cabecera-seccion">
-      <h2>Matriz de aspectos e impactos <span class="contador">Registros: {{ aspectos|length }}</span></h2>
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Procesos</h2>
+      <p class="tarjeta-sub">Registros: {{ procesos|length }}</p>
     </div>
-    {% if aspectos %}
-    <div class="tabla-contenedor">
-      <table class="tabla">
-        <thead>
-          <tr>
-            <th scope="col">Código</th>
-            <th scope="col">Proceso</th>
-            <th scope="col">Aspecto ambiental</th>
-            <th scope="col">Impacto asociado</th>
-            <th scope="col">Criterio de significancia</th>
-            <th scope="col">Dictamen</th>
-            <th scope="col">Indicador asociado</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for aspecto in aspectos %}
-          <tr>
-            <td class="codigo">{{ aspecto.codigo }}</td>
-            <td>{{ aspecto.proceso.nombre }}</td>
-            <td>{{ aspecto.nombre }}</td>
-            <td>{{ aspecto.impacto_asociado }}</td>
-            <td>{{ aspecto.criterio_significancia }}</td>
-            <td>
-              {% if aspecto.es_significativo %}
-              <span class="pastilla pastilla-acento">Significativo</span>
-              {% else %}
-              <span class="pastilla pastilla-neutra">No significativo</span>
-              {% endif %}
-            </td>
-            <td>
-              {% for indicador in aspecto.indicadores.all %}
-              <span class="codigo">{{ indicador.codigo }}</span>{% if not forloop.last %}, {% endif %}
-              {% empty %}
-              {% if aspecto.es_significativo %}
-              <span class="alerta-texto">Sin indicador</span>
-              {% else %}
-              <span class="muted">Sin indicador</span>
-              {% endif %}
-              {% endfor %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <p class="estado-vacio">Aún no hay aspectos registrados. Registra el proceso y su aspecto asociado.</p>
-    {% endif %}
+    <span class="chip">ISO 4.3</span>
   </div>
+  {% if procesos %}
+  <div class="tabla-contenedor">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th scope="col">Código</th>
+          <th scope="col">Proceso</th>
+          <th scope="col">Responsable</th>
+          <th scope="col">Aspectos (significativos)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for proceso in procesos %}
+        <tr>
+          <td class="codigo">{{ proceso.codigo }}</td>
+          <td>{{ proceso.nombre }}</td>
+          <td>{{ proceso.responsable }}</td>
+          <td>
+            {% if proceso.total_aspectos %}
+            {{ proceso.total_aspectos }} · {{ proceso.total_significativos }} significativo{{ proceso.total_significativos|pluralize }}
+            {% else %}
+            <span class="muted">Sin aspectos</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="estado-vacio">Aún no hay procesos registrados. Crea el primero para empezar el catálogo.</p>
+  {% endif %}
+</section>
+
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Matriz de aspectos e impactos</h2>
+      <p class="tarjeta-sub">RF-01 · Cláusula 6.1.2 · Identificación y evaluación de significancia</p>
+    </div>
+    <span class="chip">ISO 6.1.2</span>
+  </div>
+  {% if aspectos %}
+  <div class="tabla-contenedor">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th scope="col">Código</th>
+          <th scope="col">Proceso</th>
+          <th scope="col">Aspecto ambiental</th>
+          <th scope="col">Impacto asociado</th>
+          <th scope="col">Criterio de significancia</th>
+          <th scope="col">Dictamen</th>
+          <th scope="col">Indicador asociado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for aspecto in aspectos %}
+        <tr>
+          <td class="codigo">{{ aspecto.codigo }}</td>
+          <td>{{ aspecto.proceso.nombre }}</td>
+          <td>{{ aspecto.nombre }}</td>
+          <td>{{ aspecto.impacto_asociado }}</td>
+          <td>{{ aspecto.criterio_significancia }}</td>
+          <td>
+            {% if aspecto.es_significativo %}
+            <span class="pastilla pastilla-acento">Significativo</span>
+            {% else %}
+            <span class="pastilla pastilla-neutra">No significativo</span>
+            {% endif %}
+          </td>
+          <td>
+            {% for indicador in aspecto.indicadores.all %}
+            <span class="codigo">{{ indicador.codigo }}</span>{% if not forloop.last %}, {% endif %}
+            {% empty %}
+            {% if aspecto.es_significativo %}
+            <span class="alerta-texto">Sin indicador</span>
+            {% else %}
+            <span class="muted">Sin indicador</span>
+            {% endif %}
+            {% endfor %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="estado-vacio">Aún no hay aspectos registrados. Registra el proceso y su aspecto asociado.</p>
+  {% endif %}
 </section>
 {% endblock %}

@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block titulo %}{{ titulo }}{% endblock %}
+{% block titulo_pagina %}{{ titulo }}{% endblock %}
+{% block subtitulo_pagina %}{{ subtitulo }}{% endblock %}
 {% block contenido %}
-<section class="panel panel-formulario">
-  <h1>{{ titulo }}</h1>
-  <p class="panel-sub">{{ subtitulo }}</p>
+<section class="tarjeta tarjeta-formulario">
   <form method="post" novalidate>
     {% csrf_token %}
     {% if form.non_field_errors %}

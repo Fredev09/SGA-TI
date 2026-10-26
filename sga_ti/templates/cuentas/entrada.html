@@ -1,9 +1,12 @@
 {% extends "base.html" %}
-{% block titulo %}Entrada{% endblock %}
+{% block titulo %}Iniciar sesión{% endblock %}
 {% block contenido %}
-<section class="panel-login">
-  <h1 class="login-titulo">Inicio de sesión</h1>
-  <p class="login-sub">Sistema de Gestión Ambiental · ISO 14001:2015</p>
+<section class="login-tarjeta">
+  <div class="login-marca">
+    <span class="brand-badge">SGA</span>
+    <span class="login-nombre">SGA-TI</span>
+  </div>
+  <p class="login-sub">Control Operacional · ISO 14001:2015</p>
   <form method="post" novalidate>
     {% csrf_token %}
     {% if form.non_field_errors %}
@@ -22,7 +25,8 @@
       {% endfor %}
     </div>
     {% endfor %}
-    <button type="submit" class="boton boton-primario">Entrar</button>
+    <button type="submit" class="boton boton-primario">Iniciar sesión</button>
   </form>
+  <p class="login-pie">Acceso restringido a personal autorizado · CloudTech Solutions S.A.S.</p>
 </section>
 {% endblock %}
