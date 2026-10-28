@@ -7,7 +7,7 @@ from django.db import models
 from core.models import ModeloVersionado
 from operacion.models import Medicion
 
-from .almacenamiento import AlmacenEvidencias
+from .almacenamiento import AlmacenEvidenciasBD
 
 ORIGENES = [
     ("AUTOMATICA", "Automática"),
@@ -135,7 +135,7 @@ class EvidenciaNoConformidad(ModeloVersionado):
     archivo = models.FileField(
         "archivo",
         upload_to=ruta_evidencia,
-        storage=AlmacenEvidencias(),
+        storage=AlmacenEvidenciasBD(),
         max_length=255,
     )
     nombre_original = models.CharField("nombre original", max_length=255)
@@ -165,6 +165,20 @@ class EvidenciaNoConformidad(ModeloVersionado):
 
     def __str__(self):
         return "%s · %s" % (self.no_conformidad.codigo, self.nombre_original)
+
+
+class ArchivoEvidencia(models.Model):
+    nombre = models.CharField("nombre", max_length=255, unique=True)
+    contenido = models.BinaryField("contenido")
+    tamano = models.PositiveBigIntegerField("tamaño en bytes")
+    creado = models.DateTimeField("fecha de creación", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "archivo de evidencia"
+        verbose_name_plural = "archivos de evidencia"
+
+    def __str__(self):
+        return self.nombre
 
 
 class TransicionNoConformidad(models.Model):

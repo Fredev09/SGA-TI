@@ -12,8 +12,10 @@ from django.urls import reverse
 from django.utils import timezone
 
 from gestion import servicios
+from gestion.archivos import maximo_bytes
 from gestion.models import (
     AccionCorrectiva,
+    ArchivoEvidencia,
     EvidenciaNoConformidad,
     NoConformidad,
     TransicionNoConformidad,
@@ -268,18 +270,31 @@ class CicloNoConformidadPruebas(TestCase):
 
     def test_evidencia_rechaza_tamano(self):
         no_conformidad = self._hallazgo()
-        grande = PDF + b"0" * (5 * 1024 * 1024)
+        grande = PDF + b"0" * (maximo_bytes() - len(PDF) + 1)
         with self.assertRaises(ValidationError):
             self._evidencia(no_conformidad, contenido=grande)
 
-    def test_evidencia_queda_fuera_del_repositorio(self):
+    def test_evidencia_acepta_el_limite_exacto(self):
+        no_conformidad = self._hallazgo()
+        contenido = PDF + b"0" * (maximo_bytes() - len(PDF))
+        evidencia = self._evidencia(no_conformidad, contenido=contenido)
+        self.assertEqual(evidencia.tamano, maximo_bytes())
+
+    def test_evidencia_se_guarda_en_la_base(self):
         no_conformidad = self._hallazgo()
         evidencia = self._evidencia(no_conformidad)
-        ruta = Path(evidencia.archivo.path)
-        self.assertTrue(ruta.is_file())
-        self.assertTrue(str(ruta).startswith(str(DIR_EVIDENCIAS)))
+        archivo = ArchivoEvidencia.objects.get(nombre=evidencia.archivo.name)
+        self.assertEqual(bytes(archivo.contenido), PDF)
+        self.assertEqual(archivo.tamano, len(PDF))
+        self.assertFalse((DIR_EVIDENCIAS / evidencia.archivo.name).exists())
         self.assertEqual(len(evidencia.huella), 64)
-        self.assertNotIn("acta", ruta.name)
+        self.assertNotIn("acta", evidencia.archivo.name)
+
+    def test_evidencia_no_tiene_url_publica(self):
+        no_conformidad = self._hallazgo()
+        evidencia = self._evidencia(no_conformidad)
+        with self.assertRaises(ValueError):
+            evidencia.archivo.storage.url(evidencia.archivo.name)
 
     def test_marcar_revision_respeta_accion_ejecutada(self):
         medicion = operacion_servicios.registrar_medicion(
@@ -388,9 +403,11 @@ class CicloNoConformidadPruebas(TestCase):
         respuesta = self.cliente.post(
             reverse("gestion:nueva_evidencia", args=[no_conformidad.pk]),
             data=None,
-            CONTENT_LENGTH=str(7 * 1024 * 1024),
+            CONTENT_LENGTH=str(maximo_bytes() + 2 * 1024 * 1024),
+            follow=True,
         )
-        self.assertEqual(respuesta.status_code, 302)
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "1 MB")
         self.assertFalse(EvidenciaNoConformidad.objects.exists())
 
     def test_operador_no_puede_adjuntar_evidencia(self):

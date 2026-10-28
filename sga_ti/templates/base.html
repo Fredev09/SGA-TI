@@ -52,6 +52,12 @@
       <circle cx="12" cy="12" r="5"></circle>
       <circle cx="12" cy="12" r="1.4"></circle>
     </symbol>
+    <symbol id="icono-sincronizacion" viewBox="0 0 24 24">
+      <path d="M4 12a8 8 0 0 1 13.7-5.6L20 8"></path>
+      <path d="M20 4v4h-4"></path>
+      <path d="M20 12a8 8 0 0 1-13.7 5.6L4 16"></path>
+      <path d="M4 20v-4h4"></path>
+    </symbol>
   </svg>
   {% if user.is_authenticated %}
   <div class="app">
@@ -99,6 +105,11 @@
         {% if user|tiene_permiso:"modificar_usuarios" %}
         <a class="nav-item{% if request.resolver_match.url_name == 'usuarios' or request.resolver_match.url_name == 'usuario_nuevo' or request.resolver_match.url_name == 'usuario_editar' or request.resolver_match.url_name == 'usuario_contrasena' %} active{% endif %}" href="{% url 'cuentas:usuarios' %}">
           <svg class="nav-icono" aria-hidden="true"><use href="#icono-usuarios"></use></svg>Usuarios y roles
+        </a>
+        {% endif %}
+        {% if user|tiene_permiso:"sincronizar_datos" %}
+        <a class="nav-item{% if request.resolver_match.url_name == 'sincronizacion' %} active{% endif %}" href="{% url 'operacion:sincronizacion' %}">
+          <svg class="nav-icono" aria-hidden="true"><use href="#icono-sincronizacion"></use></svg>Sincronización
         </a>
         {% endif %}
         <a class="nav-item{% if request.resolver_match.url_name == 'preferencias' %} active{% endif %}" href="{% url 'cuentas:preferencias' %}">

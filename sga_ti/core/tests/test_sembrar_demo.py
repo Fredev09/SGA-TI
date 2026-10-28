@@ -1,26 +1,15 @@
-import shutil
-import tempfile
 from io import StringIO
-from pathlib import Path
 
 from django.core.management import call_command
-from django.test import TestCase, override_settings
+from django.test import TestCase
 
 from ambiental.models import AspectoAmbiental, Indicador, MetaAmbiental, Proceso
 from cuentas.models import Usuario
 from gestion.models import NoConformidad
 from operacion.models import Medicion
 
-DIR_EVIDENCIAS = Path(tempfile.mkdtemp(prefix="sga_demo_pruebas_"))
 
-
-@override_settings(EVIDENCIAS_RUTA=str(DIR_EVIDENCIAS))
 class SembrarDemoPruebas(TestCase):
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        shutil.rmtree(DIR_EVIDENCIAS, ignore_errors=True)
-
     def _sembrar(self, **opciones):
         salida = StringIO()
         call_command("sembrar_demo", stdout=salida, **opciones)

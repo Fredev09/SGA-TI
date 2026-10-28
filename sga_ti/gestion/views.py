@@ -11,8 +11,7 @@ from operacion.models import MESES
 
 from . import reportes as reportes_servicios
 from . import servicios
-
-LIMITE_PETICION_EVIDENCIA = 6 * 1024 * 1024
+from .archivos import maximo_bytes, maximo_mb
 from .forms import (
     FormularioAccion,
     FormularioAccionEstado,
@@ -202,8 +201,10 @@ def nueva_evidencia(request, nc_id):
         tamano_peticion = int(request.META.get("CONTENT_LENGTH") or 0)
     except (TypeError, ValueError):
         tamano_peticion = 0
-    if tamano_peticion > LIMITE_PETICION_EVIDENCIA:
-        messages.error(request, "El archivo supera el límite de 5 MB.")
+    if tamano_peticion > maximo_bytes() + 1024 * 1024:
+        messages.error(
+            request, "El archivo supera el límite de %d MB." % maximo_mb()
+        )
         return redirect("gestion:detalle", nc_id=no_conformidad.pk)
     formulario = FormularioEvidencia(request.POST, request.FILES)
     if not formulario.is_valid():

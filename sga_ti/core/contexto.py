@@ -1,9 +1,6 @@
-from django.conf import settings
 from pathlib import Path
 
-
-def estado_base_datos(request):
-    return {"base_en_nube": bool(getattr(settings, "URL_BASE_DATOS", ""))}
+from django.conf import settings
 
 
 def version_estaticos(request):

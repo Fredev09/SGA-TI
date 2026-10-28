@@ -89,7 +89,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "core.contexto.estado_base_datos",
                 "core.contexto.version_estaticos",
             ],
         },
@@ -99,6 +98,8 @@ TEMPLATES = [
 WSGI_APPLICATION = "sga_ti.wsgi.application"
 
 SQLITE_RUTA = os.environ.get("SGA_TI_DB_PATH", str(Path.home() / "sga_ti_datos" / "sga_ti.db"))
+
+EVIDENCIA_MAX_MB = int(os.environ.get("SGA_TI_EVIDENCIA_MAX_MB", "1"))
 
 EVIDENCIAS_RUTA = os.environ.get(
     "SGA_TI_EVIDENCIAS_PATH", str(Path.home() / "sga_ti_evidencias")

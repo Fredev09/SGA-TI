@@ -2,13 +2,15 @@ from uuid import UUID
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from ambiental.models import Indicador
 from cuentas.permisos import requiere_rol
 
-from . import servicios
+from . import servicios, sincronizacion
 from .forms import FormularioPeriodo, FormularioValor
 from .models import ESTADOS_SEMAFORO, MESES, Medicion
 
@@ -199,3 +201,61 @@ def medicion_editar(request, medicion_id):
         "historial": medicion.auditorias.select_related("usuario"),
     }
     return render(request, "operacion/medicion_edicion.html", contexto)
+
+
+def _contexto_sincronizacion(resultado=None):
+    contexto = {"total_mediciones": Medicion.objects.count()}
+    if resultado is not None:
+        contexto["resultado"] = resultado
+    return contexto
+
+
+@requiere_rol("sincronizar_datos")
+def sincronizacion_panel(request):
+    return render(
+        request, "operacion/sincronizacion.html", _contexto_sincronizacion()
+    )
+
+
+@requiere_rol("sincronizar_datos")
+def exportar_mediciones(request):
+    respuesta = HttpResponse(
+        sincronizacion.exportar(), content_type="application/json; charset=utf-8"
+    )
+    respuesta["Content-Disposition"] = 'attachment; filename="mediciones-sga.json"'
+    return respuesta
+
+
+@requiere_rol("sincronizar_datos")
+@require_POST
+def importar_mediciones(request):
+    archivo = request.FILES.get("archivo")
+    if archivo is None:
+        messages.error(request, "Seleccione un archivo JSON.")
+        return redirect("operacion:sincronizacion")
+    if archivo.size > sincronizacion.MAXIMO_BYTES:
+        messages.error(request, "El archivo supera el límite de 2 MB.")
+        return redirect("operacion:sincronizacion")
+    try:
+        texto = archivo.read().decode("utf-8-sig")
+        resultado = sincronizacion.importar(texto)
+    except UnicodeDecodeError:
+        messages.error(request, "El archivo debe estar codificado en UTF-8.")
+        return redirect("operacion:sincronizacion")
+    except ValidationError as error:
+        messages.error(request, " ".join(error.messages))
+        return redirect("operacion:sincronizacion")
+    messages.success(request, "Mediciones importadas: %d." % resultado["importadas"])
+    if resultado["omitidas"]:
+        messages.warning(
+            request, "Omitidas por ya existir: %d." % resultado["omitidas"]
+        )
+    if resultado["errores"]:
+        messages.error(
+            request, "Filas con error: %d." % len(resultado["errores"])
+        )
+    return render(
+        request,
+        "operacion/sincronizacion.html",
+        _contexto_sincronizacion(resultado),
+    )

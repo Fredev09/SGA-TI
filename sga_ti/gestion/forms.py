@@ -1,6 +1,6 @@
 from django import forms
 
-from .archivos import validar_evidencia
+from .archivos import maximo_mb, validar_evidencia
 from .models import NoConformidad
 
 
@@ -74,16 +74,20 @@ class FormularioAccionEstado(forms.Form):
 
 
 class FormularioEvidencia(forms.Form):
-    archivo = forms.FileField(
-        label="Archivo",
-        help_text="PDF, JPG o PNG de hasta 5 MB.",
-    )
+    archivo = forms.FileField(label="Archivo")
     referencia = forms.CharField(
         label="Referencia documental",
         max_length=255,
         help_text="Documento y ubicación donde se conserva el original.",
         error_messages={"required": "Indique la referencia documental localizable."},
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["archivo"].help_text = (
+            "PDF, JPG o PNG de hasta %d MB. Debe mostrar fecha, emisor y referencia."
+            % maximo_mb()
+        )
 
     def clean_archivo(self):
         archivo = self.cleaned_data["archivo"]

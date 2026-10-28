@@ -1,9 +1,8 @@
 import hashlib
 from pathlib import Path
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
-
-MAXIMO_BYTES = 5 * 1024 * 1024
 
 TIPOS = {
     ".pdf": "PDF",
@@ -19,6 +18,14 @@ FIRMAS = {
 }
 
 
+def maximo_mb():
+    return settings.EVIDENCIA_MAX_MB
+
+
+def maximo_bytes():
+    return maximo_mb() * 1024 * 1024
+
+
 def tipo_de_archivo(nombre):
     return TIPOS.get(Path(nombre or "").suffix.lower())
 
@@ -27,14 +34,18 @@ def validar_evidencia(archivo):
     tipo = tipo_de_archivo(archivo.name)
     if tipo is None:
         raise ValidationError("Solo se admiten archivos PDF, JPG o PNG.")
-    if archivo.size > MAXIMO_BYTES:
-        raise ValidationError("El archivo supera el limite de 5 MB.")
+    if archivo.size > maximo_bytes():
+        raise ValidationError(
+            "El archivo supera el límite de %d MB." % maximo_mb()
+        )
     if archivo.size == 0:
-        raise ValidationError("El archivo esta vacio.")
+        raise ValidationError("El archivo está vacío.")
     inicio = archivo.read(8)
     archivo.seek(0)
     if not any(inicio.startswith(firma) for firma in FIRMAS[tipo]):
-        raise ValidationError("El contenido no corresponde a un PDF, JPG o PNG valido.")
+        raise ValidationError(
+            "El contenido no corresponde a un PDF, JPG o PNG válido."
+        )
     return tipo
 
 

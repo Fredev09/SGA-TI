@@ -1,7 +1,7 @@
 import secrets
 
 from django.contrib.auth import authenticate
-from django.test import Client, TestCase, override_settings
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from cuentas.models import Usuario
@@ -223,10 +223,3 @@ class UsuariosPruebas(TestCase):
         self.assertContains(respuesta, "Preferencias del sistema")
         self.assertNotContains(respuesta, "Metas e indicadores")
         self.assertNotContains(respuesta, "Usuarios y roles")
-
-    def test_preferencias_indica_el_motor_de_datos(self):
-        respuesta = self.cliente.get(reverse("cuentas:preferencias"))
-        self.assertContains(respuesta, "SQLite local")
-        with override_settings(URL_BASE_DATOS="postgresql://usuario:clave@host/base"):
-            respuesta = self.cliente.get(reverse("cuentas:preferencias"))
-        self.assertContains(respuesta, "PostgreSQL en la nube")

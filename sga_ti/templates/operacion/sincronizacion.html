@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block titulo %}Sincronización de mediciones{% endblock %}
+{% block titulo_pagina %}Sincronización de mediciones{% endblock %}
+{% block subtitulo_pagina %}Traslado manual de mediciones entre la base local y la nube{% endblock %}
+{% block contenido %}
+<div class="rejilla rejilla-igualada">
+  <section class="tarjeta">
+    <div class="tarjeta-cabecera">
+      <div>
+        <h2 class="tarjeta-titulo">Exportar mediciones</h2>
+        <p class="tarjeta-sub">Genera un archivo JSON con las mediciones registradas en esta base.</p>
+      </div>
+      <span class="chip">RNF-03</span>
+    </div>
+    <dl class="ficha">
+      <dt>Mediciones disponibles</dt>
+      <dd class="codigo">{{ total_mediciones }}</dd>
+      <dt>Formato</dt>
+      <dd>JSON UTF-8</dd>
+    </dl>
+    <div class="acciones">
+      <a class="boton boton-primario" href="{% url 'operacion:exportar_mediciones' %}">Descargar archivo</a>
+    </div>
+    <p class="ayuda">El archivo incluye indicador, usuario, periodo, valor y evidencia textual. No incluye evidencias de no conformidades.</p>
+  </section>
+
+  <section class="tarjeta">
+    <div class="tarjeta-cabecera">
+      <div>
+        <h2 class="tarjeta-titulo">Importar mediciones</h2>
+        <p class="tarjeta-sub">Carga un archivo exportado desde otro equipo.</p>
+      </div>
+      <span class="chip">RNF-03</span>
+    </div>
+    <form method="post" action="{% url 'operacion:importar_mediciones' %}" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <div class="campo">
+        <label for="archivo">Archivo JSON</label>
+        <input type="file" name="archivo" id="archivo" accept=".json,application/json" required>
+        <p class="ayuda">Hasta 2 MB y 2000 mediciones por archivo.</p>
+      </div>
+      <div class="acciones">
+        <button type="submit" class="boton boton-primario">Importar</button>
+      </div>
+    </form>
+    <p class="ayuda">Los periodos que ya existen en esta base se omiten y no se sobrescriben. Si el valor es distinto, la diferencia se resuelve manualmente por el Responsable del SGA.</p>
+  </section>
+</div>
+
+{% if resultado %}
+<section class="tarjeta">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Resultado de la importación</h2>
+      <p class="tarjeta-sub">Resumen del archivo procesado en esta ejecución</p>
+    </div>
+    <span class="chip">RNF-03</span>
+  </div>
+  <dl class="ficha">
+    <dt>Mediciones importadas</dt>
+    <dd class="codigo">{{ resultado.importadas }}</dd>
+    <dt>Omitidas por ya existir</dt>
+    <dd class="codigo">{{ resultado.omitidas }}</dd>
+    <dt>Filas con error</dt>
+    <dd class="codigo">{{ resultado.errores|length }}</dd>
+  </dl>
+  {% if resultado.errores %}
+  <div class="tabla-contenedor" data-paginar data-tamano="10">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th scope="col">Fila</th>
+          <th scope="col">Detalle</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for error in resultado.errores %}
+        <tr>
+          <td class="codigo">{{ error.fila }}</td>
+          <td>{{ error.detalle }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="estado-vacio">Sin errores en el archivo importado.</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}
