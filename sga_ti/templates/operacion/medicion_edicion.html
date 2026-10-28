@@ -1,9 +1,16 @@
 {% extends "base.html" %}
 {% block titulo %}Editar medición{% endblock %}
 {% block titulo_pagina %}Editar medición{% endblock %}
-{% block subtitulo_pagina %}RF-03 · Recálculo sincrónico y registro en bitácora (RF-07).{% endblock %}
+{% block subtitulo_pagina %}RF-03 · Edición en 3 pasos con recálculo y bitácora (RF-07).{% endblock %}
 {% block contenido %}
+<ol class="pasos">
+  <li class="paso{% if paso == 1 %} paso-activo{% endif %}"><span class="paso-numero">1</span>Indicador y periodo</li>
+  <li class="paso{% if paso == 2 %} paso-activo{% endif %}"><span class="paso-numero">2</span>Valor y evidencia</li>
+  <li class="paso{% if paso == 3 %} paso-activo{% endif %}"><span class="paso-numero">3</span>Confirmación y guardado</li>
+</ol>
+
 <section class="tarjeta tarjeta-formulario">
+  {% if paso == 1 %}
   <div class="alerta" role="status">
     <span class="alerta-marca" aria-hidden="true"></span>
     <div class="alerta-cuerpo">
@@ -19,14 +26,18 @@
   <dl class="ficha">
     <dt>Indicador</dt>
     <dd>{{ medicion.indicador.nombre }} ({{ medicion.indicador.unidad_medida }})</dd>
+    <dt>Periodo</dt>
+    <dd>{{ medicion.nombre_mes }} {{ medicion.anio }}</dd>
     {% if meta %}
     <dt>Meta vigente</dt>
     <dd class="codigo">{{ meta.valor_limite }} {{ medicion.indicador.unidad_medida }}</dd>
     <dt>Valor de activación</dt>
     <dd class="codigo">{{ meta.valor_activacion }} {{ medicion.indicador.unidad_medida }}</dd>
     {% endif %}
-    <dt>Desvío registrado</dt>
-    <dd class="codigo">{{ medicion.desvio_pct }} %</dd>
+    <dt>Valor registrado</dt>
+    <dd class="codigo">{{ medicion.valor_medido }} {{ medicion.indicador.unidad_medida }}</dd>
+    <dt>Estado registrado</dt>
+    <dd><span class="pastilla pastilla-{{ medicion.estado_semaforo|lower }}">{{ medicion.get_estado_semaforo_display }}</span></dd>
     <dt>Evidencia actual</dt>
     <dd>{{ medicion.evidencia }}</dd>
     <dt>Registrada por</dt>
@@ -35,6 +46,27 @@
 
   <form method="post" novalidate>
     {% csrf_token %}
+    <input type="hidden" name="paso" value="1">
+    <p class="ayuda">El indicador y el periodo no se modifican. En el siguiente paso ajusta el valor y la evidencia.</p>
+    <div class="acciones">
+      <button type="submit" class="boton boton-primario">Siguiente</button>
+      <a href="{% url 'core:inicio' %}" class="boton">Cancelar</a>
+    </div>
+  </form>
+
+  {% elif paso == 2 %}
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Valor y evidencia</h2>
+      <p class="tarjeta-sub">{{ medicion.indicador.codigo }} · {{ medicion.nombre_mes }} {{ medicion.anio }}</p>
+    </div>
+    <span class="chip">ISO 9.1.1</span>
+  </div>
+  <p class="ayuda">Valor actual: {{ medicion.valor_medido }} {{ medicion.indicador.unidad_medida }} · evidencia actual: {{ medicion.evidencia }}</p>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="paso" value="2">
     {% if form.non_field_errors %}
     <ul class="errores">
       {% for error in form.non_field_errors %}
@@ -59,10 +91,60 @@
       <p class="ayuda">{{ form.evidencia.help_text }}</p>
     </div>
     <div class="acciones">
-      <button type="submit" class="boton boton-primario">Guardar cambios</button>
+      <button type="submit" class="boton boton-primario">Siguiente</button>
+      <button type="submit" name="volver" value="1" class="boton">Atrás</button>
       <a href="{% url 'core:inicio' %}" class="boton">Cancelar</a>
     </div>
   </form>
+
+  {% else %}
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Confirmación y guardado</h2>
+      <p class="tarjeta-sub">Revisa el recálculo antes de persistir el cambio.</p>
+    </div>
+    <span class="chip">ISO 9.1.1</span>
+  </div>
+  {% if form.non_field_errors %}
+  <ul class="errores">
+    {% for error in form.non_field_errors %}
+    <li class="error">{{ error }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <dl class="ficha">
+    <dt>Indicador</dt>
+    <dd>{{ medicion.indicador.codigo }} · {{ medicion.indicador.nombre }} ({{ medicion.indicador.unidad_medida }})</dd>
+    <dt>Periodo</dt>
+    <dd>{{ medicion.nombre_mes }} {{ medicion.anio }}</dd>
+    <dt>Valor anterior</dt>
+    <dd class="codigo">{{ medicion.valor_medido }} {{ medicion.indicador.unidad_medida }}</dd>
+    <dt>Valor nuevo</dt>
+    <dd class="codigo">{{ valor_ingresado }} {{ medicion.indicador.unidad_medida }}</dd>
+    <dt>Evidencia</dt>
+    <dd>{{ evidencia_ingresada }}</dd>
+    {% if previsualizacion %}
+    <dt>Valor de la meta</dt>
+    <dd class="codigo">{{ previsualizacion.valor_meta }} {{ medicion.indicador.unidad_medida }}</dd>
+    <dt>Desvío</dt>
+    <dd class="codigo">{{ previsualizacion.desvio }} %</dd>
+    <dt>Estado previsto</dt>
+    <dd><span class="pastilla pastilla-{{ previsualizacion.estado|lower }}">{{ previsualizacion.estado_display }}</span></dd>
+    {% endif %}
+  </dl>
+  <p class="ayuda">Al guardar se recalculan la meta, el desvío y el estado de la medición. El cambio queda en la bitácora con tu usuario y la fecha.</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="paso" value="3">
+    <input type="hidden" name="valor_medido" value="{{ valor_ingresado }}">
+    <input type="hidden" name="evidencia" value="{{ evidencia_ingresada }}">
+    <div class="acciones">
+      <button type="submit" class="boton boton-primario">Guardar medición</button>
+      <button type="submit" name="volver" value="2" class="boton">Atrás</button>
+      <a href="{% url 'core:inicio' %}" class="boton">Cancelar</a>
+    </div>
+  </form>
+  {% endif %}
 
   <div class="seccion">
     <div class="cabecera-seccion">

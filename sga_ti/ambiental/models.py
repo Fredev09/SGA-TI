@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from core.models import ModeloVersionado
@@ -113,3 +114,38 @@ class MetaAmbiental(ModeloVersionado):
 
         calculo = self.valor_limite * Decimal(self.umbral_advertencia_pct) / Decimal(100)
         return calculo.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+class AuditoriaMeta(models.Model):
+    meta = models.ForeignKey(
+        MetaAmbiental,
+        on_delete=models.PROTECT,
+        related_name="auditorias",
+        verbose_name="meta",
+    )
+    valor_anterior = models.DecimalField(
+        "límite anterior", max_digits=12, decimal_places=2
+    )
+    valor_nuevo = models.DecimalField(
+        "límite nuevo", max_digits=12, decimal_places=2
+    )
+    umbral_anterior = models.PositiveIntegerField("umbral anterior")
+    umbral_nuevo = models.PositiveIntegerField("umbral nuevo")
+    mediciones_recalculadas = models.PositiveIntegerField(
+        "mediciones recalculadas", default=0
+    )
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="auditorias_metas",
+        verbose_name="usuario",
+    )
+    fecha = models.DateTimeField("fecha", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "auditoría de meta"
+        verbose_name_plural = "auditorías de metas"
+        ordering = ["-fecha"]
+
+    def __str__(self):
+        return "%s · %s → %s" % (self.meta, self.valor_anterior, self.valor_nuevo)

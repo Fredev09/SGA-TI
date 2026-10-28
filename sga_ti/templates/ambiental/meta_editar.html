@@ -5,6 +5,51 @@
 {% block contenido %}
 {% include "includes/tabs_configuracion.html" with activo="metas" %}
 
+{% if confirmacion %}
+<section class="tarjeta tarjeta-formulario">
+  <div class="tarjeta-cabecera">
+    <div>
+      <h2 class="tarjeta-titulo">Confirmar recálculo de la meta</h2>
+      <p class="tarjeta-sub">{{ meta.indicador.nombre }} · {{ meta.anio_vigencia }}</p>
+    </div>
+    <span class="chip">RF-04</span>
+  </div>
+  <div class="alerta" role="status">
+    <span class="alerta-marca" aria-hidden="true"></span>
+    <div class="alerta-cuerpo">
+      <strong>{% if mediciones|length == 1 %}Se recalculará 1 medición{% else %}Se recalcularán {{ mediciones|length }} mediciones{% endif %} del año {{ meta.anio_vigencia }}</strong>
+      <p>Se actualizarán el valor de la meta, el desvío y el estado de cada medición. Las no conformidades vinculadas se reevalúan y el cambio queda en la bitácora.</p>
+    </div>
+  </div>
+  <dl class="ficha">
+    <dt>Indicador</dt>
+    <dd><span class="codigo">{{ meta.indicador.codigo }}</span> · {{ meta.indicador.nombre }} ({{ meta.indicador.unidad_medida }})</dd>
+    <dt>Límite anterior</dt>
+    <dd class="codigo">{{ anterior_valor }} {{ meta.indicador.unidad_medida }}</dd>
+    <dt>Límite nuevo</dt>
+    <dd class="codigo">{{ form.valor_limite.value }} {{ meta.indicador.unidad_medida }}</dd>
+    <dt>Umbral anterior</dt>
+    <dd class="codigo">{{ anterior_umbral }} %</dd>
+    <dt>Umbral nuevo</dt>
+    <dd class="codigo">{{ form.umbral_advertencia_pct.value }} %</dd>
+    <dt>Activación anterior</dt>
+    <dd class="codigo">{{ anterior_activacion }} {{ meta.indicador.unidad_medida }}</dd>
+    <dt>Activación nueva</dt>
+    <dd class="codigo">{{ meta.valor_activacion }} {{ meta.indicador.unidad_medida }}</dd>
+  </dl>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="confirmado" value="1">
+    <input type="hidden" name="valor_limite" value="{{ form.valor_limite.value }}">
+    <input type="hidden" name="umbral_advertencia_pct" value="{{ form.umbral_advertencia_pct.value }}">
+    <div class="acciones">
+      <button type="submit" class="boton boton-primario">Confirmar y recalcular</button>
+      <a href="{% url 'ambiental:meta_editar' meta.pk %}" class="boton">Atrás</a>
+    </div>
+  </form>
+</section>
+
+{% else %}
 <section class="tarjeta tarjeta-formulario">
   <div class="tarjeta-cabecera">
     <div>
@@ -46,12 +91,45 @@
       {% endif %}
     </div>
     {% endfor %}
-    <p class="ayuda">El valor de activación se recalcula como límite mensual × umbral / 100 al guardar.</p>
+    <p class="ayuda">Al guardar se pedirá confirmación y se recalcularán las mediciones del año. El valor de activación se calcula como límite mensual × umbral / 100.</p>
     <div class="acciones">
       <button type="submit" class="boton boton-primario">Guardar meta</button>
       <a href="{% url 'ambiental:parametrizacion' %}" class="boton">Cancelar</a>
     </div>
   </form>
-  <p class="ayuda">Las mediciones ya registradas conservan el valor de meta, el desvío y el estado con que fueron guardadas.</p>
+
+  {% if auditorias %}
+  <div class="seccion">
+    <div class="cabecera-seccion">
+      <h2>Historial de cambios de la meta <span class="contador">Registros: {{ auditorias|length }}</span></h2>
+      <span class="chip">ISO 7.5.3</span>
+    </div>
+    <div class="tabla-contenedor" data-paginar data-tamano="10">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th scope="col">Límite</th>
+            <th scope="col">Umbral</th>
+            <th scope="col">Mediciones</th>
+            <th scope="col">Usuario</th>
+            <th scope="col">Fecha y hora</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for registro in auditorias %}
+          <tr>
+            <td class="codigo">{{ registro.valor_anterior }} → {{ registro.valor_nuevo }}</td>
+            <td class="codigo">{{ registro.umbral_anterior }} → {{ registro.umbral_nuevo }} %</td>
+            <td class="codigo">{{ registro.mediciones_recalculadas }}</td>
+            <td>{{ registro.usuario.username }}</td>
+            <td class="codigo">{{ registro.fecha|date:"d/m/Y H:i" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
 </section>
+{% endif %}
 {% endblock %}

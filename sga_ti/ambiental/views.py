@@ -1,7 +1,9 @@
+from decimal import ROUND_HALF_UP, Decimal
+from uuid import UUID
+
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
-from uuid import UUID
 
 from cuentas.permisos import requiere_rol
 
@@ -149,16 +151,51 @@ def meta_editar(request, meta_id):
     meta = get_object_or_404(
         MetaAmbiental.objects.select_related("indicador"), pk=meta_id
     )
-    formulario = FormularioMetaEdicion(request.POST or None, instance=meta)
-    if request.method == "POST" and formulario.is_valid():
-        formulario.save()
-        messages.success(
-            request,
-            "Meta %s de %s actualizada." % (meta.anio_vigencia, meta.indicador.codigo),
-        )
-        return redirect("ambiental:parametrizacion")
+    if request.method == "POST":
+        anterior_valor = meta.valor_limite
+        anterior_umbral = meta.umbral_advertencia_pct
+        formulario = FormularioMetaEdicion(request.POST, instance=meta)
+        if formulario.is_valid():
+            if request.POST.get("confirmado") == "1":
+                meta, total = servicios.actualizar_meta(
+                    meta=meta,
+                    valor_limite=formulario.cleaned_data["valor_limite"],
+                    umbral_advertencia_pct=formulario.cleaned_data[
+                        "umbral_advertencia_pct"
+                    ],
+                    usuario=request.user,
+                )
+                messages.success(
+                    request,
+                    "Meta %s de %s actualizada; %d mediciones recalculadas."
+                    % (meta.anio_vigencia, meta.indicador.codigo, total),
+                )
+                return redirect("ambiental:parametrizacion")
+            mediciones = servicios.mediciones_afectadas(meta)
+            anterior_activacion = (
+                anterior_valor * Decimal(anterior_umbral) / Decimal(100)
+            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            return render(
+                request,
+                "ambiental/meta_editar.html",
+                {
+                    "form": formulario,
+                    "meta": meta,
+                    "confirmacion": True,
+                    "mediciones": mediciones,
+                    "anterior_valor": anterior_valor,
+                    "anterior_umbral": anterior_umbral,
+                    "anterior_activacion": anterior_activacion,
+                },
+            )
+    else:
+        formulario = FormularioMetaEdicion(instance=meta)
     return render(
         request,
         "ambiental/meta_editar.html",
-        {"form": formulario, "meta": meta},
+        {
+            "form": formulario,
+            "meta": meta,
+            "auditorias": meta.auditorias.select_related("usuario"),
+        },
     )

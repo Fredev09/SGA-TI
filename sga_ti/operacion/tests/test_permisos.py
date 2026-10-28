@@ -55,12 +55,93 @@ class PermisosMedicionPruebas(TestCase):
             respuesta.context["form_periodo"].initial["anio"], timezone.now().year
         )
 
-    def test_ambos_roles_pueden_abrir_la_edicion(self):
-        for cliente in (self.operador_cliente, self.responsable_cliente):
-            respuesta = cliente.get(
-                reverse("operacion:medicion_editar", args=[self.medicion.pk])
-            )
-            self.assertEqual(respuesta.status_code, 200)
+    def test_solo_el_responsable_puede_abrir_la_edicion(self):
+        url = reverse("operacion:medicion_editar", args=[self.medicion.pk])
+        self.assertEqual(self.operador_cliente.get(url).status_code, 403)
+        self.assertEqual(self.responsable_cliente.get(url).status_code, 200)
+
+    def test_el_operador_no_ve_el_enlace_de_edicion(self):
+        url = reverse("operacion:medicion_editar", args=[self.medicion.pk])
+        respuesta = self.operador_cliente.get(reverse("core:inicio"))
+        self.assertNotContains(respuesta, url)
+
+    def test_el_responsable_ve_el_enlace_de_edicion(self):
+        url = reverse("operacion:medicion_editar", args=[self.medicion.pk])
+        respuesta = self.responsable_cliente.get(reverse("core:inicio"))
+        self.assertContains(respuesta, url)
+
+    def test_edicion_muestra_el_primer_paso(self):
+        respuesta = self.responsable_cliente.get(
+            reverse("operacion:medicion_editar", args=[self.medicion.pk])
+        )
+        self.assertContains(respuesta, "Indicador y periodo")
+        self.assertContains(respuesta, "Siguiente")
+        self.assertNotContains(respuesta, "Guardar medición")
+
+    def test_edicion_paso_uno_muestra_el_formulario_de_valor(self):
+        respuesta = self.responsable_cliente.post(
+            reverse("operacion:medicion_editar", args=[self.medicion.pk]),
+            {"paso": "1"},
+        )
+        self.assertContains(respuesta, "Valor y evidencia")
+        self.assertContains(respuesta, 'name="valor_medido"')
+        self.assertEqual(AuditoriaMedicion.objects.count(), 0)
+
+    def test_edicion_paso_dos_muestra_confirmacion_sin_guardar(self):
+        respuesta = self.responsable_cliente.post(
+            reverse("operacion:medicion_editar", args=[self.medicion.pk]),
+            {
+                "paso": "2",
+                "valor_medido": "320.00",
+                "evidencia": "Recibo de acueducto 09",
+            },
+        )
+        self.assertContains(respuesta, "Confirmación y guardado")
+        self.assertContains(respuesta, "Valor nuevo")
+        self.assertEqual(AuditoriaMedicion.objects.count(), 0)
+        self.medicion.refresh_from_db()
+        self.assertEqual(self.medicion.valor_medido, Decimal("310.00"))
+
+    def test_edicion_paso_tres_guarda_y_registra_bitacora(self):
+        respuesta = self.responsable_cliente.post(
+            reverse("operacion:medicion_editar", args=[self.medicion.pk]),
+            {
+                "paso": "3",
+                "valor_medido": "320.00",
+                "evidencia": "Recibo de acueducto 09",
+            },
+        )
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertEqual(AuditoriaMedicion.objects.count(), 1)
+        self.medicion.refresh_from_db()
+        self.assertEqual(self.medicion.valor_medido, Decimal("320.00"))
+
+    def test_edicion_paso_dos_invalido_no_avanza(self):
+        respuesta = self.responsable_cliente.post(
+            reverse("operacion:medicion_editar", args=[self.medicion.pk]),
+            {
+                "paso": "2",
+                "valor_medido": "-5",
+                "evidencia": "Recibo corregido",
+            },
+        )
+        self.assertContains(respuesta, "Valor y evidencia")
+        self.assertEqual(AuditoriaMedicion.objects.count(), 0)
+        self.medicion.refresh_from_db()
+        self.assertEqual(self.medicion.valor_medido, Decimal("310.00"))
+
+    def test_edicion_atras_desde_confirmacion_vuelve_al_valor(self):
+        respuesta = self.responsable_cliente.post(
+            reverse("operacion:medicion_editar", args=[self.medicion.pk]),
+            {
+                "paso": "3",
+                "volver": "2",
+                "valor_medido": "320.00",
+                "evidencia": "Recibo de acueducto 09",
+            },
+        )
+        self.assertContains(respuesta, "Valor y evidencia")
+        self.assertEqual(AuditoriaMedicion.objects.count(), 0)
 
     def test_flujo_completo_de_tres_pasos(self):
         url = reverse("operacion:medicion_nueva")
@@ -144,7 +225,7 @@ class PermisosMedicionPruebas(TestCase):
 
     def test_edicion_directa_con_valor_invalido_no_guarda(self):
         url = reverse("operacion:medicion_editar", args=[self.medicion.pk])
-        respuesta = self.operador_cliente.post(
+        respuesta = self.responsable_cliente.post(
             url, {"valor_medido": "-5", "evidencia": "Recibo corregido"}
         )
         self.assertEqual(respuesta.status_code, 200)
@@ -152,9 +233,19 @@ class PermisosMedicionPruebas(TestCase):
         self.assertEqual(self.medicion.valor_medido, Decimal("310.00"))
         self.assertEqual(AuditoriaMedicion.objects.count(), 0)
 
-    def test_edicion_valida_registra_bitacora_y_redirige(self):
+    def test_el_operador_no_puede_editar_por_post_directo(self):
         url = reverse("operacion:medicion_editar", args=[self.medicion.pk])
         respuesta = self.operador_cliente.post(
+            url, {"valor_medido": "320.00", "evidencia": "Recibo corregido"}
+        )
+        self.assertEqual(respuesta.status_code, 403)
+        self.medicion.refresh_from_db()
+        self.assertEqual(self.medicion.valor_medido, Decimal("310.00"))
+        self.assertEqual(AuditoriaMedicion.objects.count(), 0)
+
+    def test_edicion_valida_registra_bitacora_y_redirige(self):
+        url = reverse("operacion:medicion_editar", args=[self.medicion.pk])
+        respuesta = self.responsable_cliente.post(
             url, {"valor_medido": "320.00", "evidencia": "Recibo de acueducto 09"}
         )
         self.assertEqual(respuesta.status_code, 302)
@@ -163,11 +254,11 @@ class PermisosMedicionPruebas(TestCase):
         self.assertEqual(self.medicion.valor_medido, Decimal("320.00"))
 
     def test_identificador_de_medicion_invalido_da_404(self):
-        respuesta = self.operador_cliente.get("/mediciones/no-es-uuid/editar/")
+        respuesta = self.responsable_cliente.get("/mediciones/no-es-uuid/editar/")
         self.assertEqual(respuesta.status_code, 404)
 
     def test_medicion_inexistente_da_404(self):
-        respuesta = self.operador_cliente.get(
+        respuesta = self.responsable_cliente.get(
             reverse(
                 "operacion:medicion_editar",
                 args=["11111111-1111-1111-1111-111111111111"],

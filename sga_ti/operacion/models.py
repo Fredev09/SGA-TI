@@ -109,3 +109,46 @@ class AuditoriaMedicion(models.Model):
 
     def __str__(self):
         return "%s · %s → %s" % (self.medicion, self.valor_anterior, self.valor_nuevo)
+
+
+class AuditoriaEvaluacion(models.Model):
+    medicion = models.ForeignKey(
+        Medicion,
+        on_delete=models.PROTECT,
+        related_name="evaluaciones",
+        verbose_name="medición",
+    )
+    valor_meta_anterior = models.DecimalField(
+        "meta anterior", max_digits=12, decimal_places=2
+    )
+    valor_meta_nuevo = models.DecimalField(
+        "meta nueva", max_digits=12, decimal_places=2
+    )
+    desvio_anterior = models.DecimalField(
+        "desvío anterior", max_digits=12, decimal_places=2
+    )
+    desvio_nuevo = models.DecimalField(
+        "desvío nuevo", max_digits=12, decimal_places=2
+    )
+    estado_anterior = models.CharField(
+        "estado anterior", max_length=20, choices=ESTADOS_SEMAFORO
+    )
+    estado_nuevo = models.CharField(
+        "estado nuevo", max_length=20, choices=ESTADOS_SEMAFORO
+    )
+    usuario = models.ForeignKey(
+        "cuentas.Usuario",
+        on_delete=models.PROTECT,
+        related_name="auditorias_evaluaciones",
+        verbose_name="usuario",
+    )
+    motivo = models.CharField("motivo", max_length=120, default="Meta actualizada")
+    fecha = models.DateTimeField("fecha", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "auditoría de evaluación"
+        verbose_name_plural = "auditorías de evaluaciones"
+        ordering = ["-fecha"]
+
+    def __str__(self):
+        return "%s · %s → %s" % (self.medicion, self.estado_anterior, self.estado_nuevo)

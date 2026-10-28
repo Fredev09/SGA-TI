@@ -4,7 +4,12 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
-from .models import AspectoAmbiental, Indicador, MetaAmbiental, Proceso
+from operacion import servicios as operacion_servicios
+from operacion.models import AuditoriaEvaluacion, Medicion
+
+from gestion import servicios as gestion_servicios
+
+from .models import AspectoAmbiental, AuditoriaMeta, Indicador, MetaAmbiental, Proceso
 
 FILTROS = ("todos", "significativos", "no_significativos")
 
@@ -198,3 +203,78 @@ def crear_meta(*, indicador, anio_vigencia, valor_limite, umbral_advertencia_pct
             operador=operador,
             umbral_advertencia_pct=umbral,
         )
+
+
+def mediciones_afectadas(meta):
+    return Medicion.objects.filter(
+        indicador=meta.indicador, anio=meta.anio_vigencia
+    ).select_related("indicador", "usuario")
+
+
+def actualizar_meta(*, meta, valor_limite, umbral_advertencia_pct, usuario):
+    if not isinstance(meta, MetaAmbiental):
+        raise ValidationError("La meta indicada no existe.")
+    try:
+        valor = Decimal(valor_limite)
+    except (InvalidOperation, TypeError):
+        raise ValidationError("El límite mensual debe ser un número.")
+    if valor <= 0:
+        raise ValidationError("El límite mensual debe ser numéricamente positivo.")
+    try:
+        umbral = int(umbral_advertencia_pct)
+    except (TypeError, ValueError):
+        raise ValidationError("Ingrese el umbral de advertencia.")
+    if umbral < 50 or umbral > 99:
+        raise ValidationError("El umbral de advertencia debe estar entre 50% y 99%.")
+
+    with transaction.atomic():
+        actual = MetaAmbiental.objects.select_for_update().get(pk=meta.pk)
+        valor_anterior = actual.valor_limite
+        umbral_anterior = actual.umbral_advertencia_pct
+        actual.valor_limite = valor
+        actual.umbral_advertencia_pct = umbral
+        actual.save()
+
+        mediciones = list(
+            Medicion.objects.select_for_update().filter(
+                indicador=actual.indicador, anio=actual.anio_vigencia
+            )
+        )
+        for medicion in mediciones:
+            estado_anterior = medicion.estado_semaforo
+            meta_anterior = medicion.valor_meta
+            desvio_anterior = medicion.desvio_pct
+            medicion.valor_meta = actual.valor_limite
+            medicion.desvio_pct = operacion_servicios.calcular_desvio(
+                medicion.valor_medido, actual.valor_limite
+            )
+            medicion.estado_semaforo = operacion_servicios.clasificar_estado(
+                medicion.valor_medido, actual
+            )
+            medicion.save(
+                update_fields=["valor_meta", "desvio_pct", "estado_semaforo"]
+            )
+            AuditoriaEvaluacion.objects.create(
+                medicion=medicion,
+                valor_meta_anterior=meta_anterior,
+                valor_meta_nuevo=medicion.valor_meta,
+                desvio_anterior=desvio_anterior,
+                desvio_nuevo=medicion.desvio_pct,
+                estado_anterior=estado_anterior,
+                estado_nuevo=medicion.estado_semaforo,
+                usuario=usuario,
+            )
+            gestion_servicios.aplicar_reglas_de_semaforo(
+                medicion, estado_anterior=estado_anterior
+            )
+
+        AuditoriaMeta.objects.create(
+            meta=actual,
+            valor_anterior=valor_anterior,
+            valor_nuevo=actual.valor_limite,
+            umbral_anterior=umbral_anterior,
+            umbral_nuevo=actual.umbral_advertencia_pct,
+            mediciones_recalculadas=len(mediciones),
+            usuario=usuario,
+        )
+        return actual, len(mediciones)

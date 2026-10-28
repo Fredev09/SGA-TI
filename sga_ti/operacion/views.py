@@ -172,35 +172,110 @@ def medicion_nueva(request):
     return _paso_periodo(request, FormularioPeriodo(initial=inicial))
 
 
+def _contexto_edicion(medicion, meta, paso, formulario):
+    return {
+        "medicion": medicion,
+        "meta": meta,
+        "paso": paso,
+        "form": formulario,
+        "historial": medicion.auditorias.select_related("usuario"),
+    }
+
+
 @requiere_rol("editar_medicion")
 def medicion_editar(request, medicion_id):
     medicion = get_object_or_404(Medicion, pk=medicion_id)
-    if request.method == "POST":
-        formulario = FormularioValor(request.POST)
-        if formulario.is_valid():
-            try:
-                servicios.editar_medicion(
-                    medicion=medicion, usuario=request.user, **formulario.cleaned_data
-                )
-            except ValidationError as error:
-                formulario.add_error(None, error)
-            else:
-                messages.success(
-                    request,
-                    "Medición actualizada; el cambio quedó asentado en la bitácora de auditoría.",
-                )
-                return redirect("core:inicio")
-    else:
-        formulario = FormularioValor(
-            initial={"valor_medido": medicion.valor_medido, "evidencia": medicion.evidencia}
-        )
-    contexto = {
-        "medicion": medicion,
-        "form": formulario,
-        "meta": servicios.buscar_meta(medicion.indicador, medicion.anio),
-        "historial": medicion.auditorias.select_related("usuario"),
+    meta = servicios.buscar_meta(medicion.indicador, medicion.anio)
+    inicial = {
+        "valor_medido": medicion.valor_medido,
+        "evidencia": medicion.evidencia,
     }
-    return render(request, "operacion/medicion_edicion.html", contexto)
+
+    if request.method != "POST":
+        return render(
+            request,
+            "operacion/medicion_edicion.html",
+            _contexto_edicion(medicion, meta, 1, FormularioValor(initial=inicial)),
+        )
+
+    if request.POST.get("volver") == "1":
+        return render(
+            request,
+            "operacion/medicion_edicion.html",
+            _contexto_edicion(medicion, meta, 1, FormularioValor(initial=inicial)),
+        )
+
+    if request.POST.get("volver") == "2":
+        return render(
+            request,
+            "operacion/medicion_edicion.html",
+            _contexto_edicion(medicion, meta, 2, FormularioValor(request.POST)),
+        )
+
+    paso = request.POST.get("paso", "3")
+    formulario = FormularioValor(request.POST)
+
+    if paso == "1":
+        return render(
+            request,
+            "operacion/medicion_edicion.html",
+            _contexto_edicion(medicion, meta, 2, FormularioValor(initial=inicial)),
+        )
+
+    if not formulario.is_valid():
+        return render(
+            request,
+            "operacion/medicion_edicion.html",
+            _contexto_edicion(medicion, meta, 2, formulario),
+        )
+
+    if meta is None:
+        formulario.add_error(
+            None,
+            "El indicador %s no tiene meta vigente para el año %s."
+            % (medicion.indicador.codigo, medicion.anio),
+        )
+        return render(
+            request,
+            "operacion/medicion_edicion.html",
+            _contexto_edicion(medicion, meta, 2, formulario),
+        )
+
+    if paso == "2":
+        valor = formulario.cleaned_data["valor_medido"]
+        estado = servicios.clasificar_estado(valor, meta)
+        contexto = _contexto_edicion(medicion, meta, 3, formulario)
+        contexto.update(
+            {
+                "previsualizacion": {
+                    "valor_meta": meta.valor_limite,
+                    "umbral": meta.valor_activacion,
+                    "desvio": servicios.calcular_desvio(valor, meta.valor_limite),
+                    "estado": estado,
+                    "estado_display": dict(ESTADOS_SEMAFORO)[estado],
+                },
+                "valor_ingresado": valor,
+                "evidencia_ingresada": formulario.cleaned_data["evidencia"],
+            }
+        )
+        return render(request, "operacion/medicion_edicion.html", contexto)
+
+    try:
+        servicios.editar_medicion(
+            medicion=medicion, usuario=request.user, **formulario.cleaned_data
+        )
+    except ValidationError as error:
+        formulario.add_error(None, error)
+        return render(
+            request,
+            "operacion/medicion_edicion.html",
+            _contexto_edicion(medicion, meta, 2, formulario),
+        )
+    messages.success(
+        request,
+        "Medición actualizada; el cambio quedó asentado en la bitácora de auditoría.",
+    )
+    return redirect("core:inicio")
 
 
 def _contexto_sincronizacion(resultado=None):
